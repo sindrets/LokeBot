@@ -59,3 +59,9 @@ typings/
 
 # next.js build output
 .next
+
+# sensitive files
+auth.json
+
+# compiled output
+out/**/*

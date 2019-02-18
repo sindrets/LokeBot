@@ -1,0 +1,26 @@
+{
+  "name": "loke-bot",
+  "version": "0.0.1",
+  "description": "",
+  "main": "out/Main.js",
+  "scripts": {
+    "start": "node out/Main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sindrets/LokeBot.git"
+  },
+  "author": "sindrets",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/sindrets/LokeBot/issues"
+  },
+  "homepage": "https://github.com/sindrets/LokeBot#readme",
+  "dependencies": {
+    "@types/long": "^4.0.0",
+    "@types/node": "^11.9.4",
+    "discord.js": "^11.4.2",
+    "long": "^4.0.0"
+  }
+}
