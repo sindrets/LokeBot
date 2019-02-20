@@ -1,10 +1,10 @@
-import { Client, TextChannel, Guild, GuildChannel, GuildMember } from "discord.js";
+import { Client, TextChannel, Guild, GuildChannel, GuildMember, Role } from "discord.js";
 import { BotEvent } from "./Constants";
 import moment from "moment";
 import schedule from "node-schedule";
 import Long from "long";
-const config = require("../src/settings.json");
-const auth = require("../auth.json");
+import config from "./settings.json";
+import auth from "../auth.json";
 
 interface Loker {
 	member: GuildMember,
@@ -33,15 +33,39 @@ export default class LokeBot {
 			console.log(`Logged in as ${this.client.user.tag}!`);
 			this.populateMemberDict();
 
+			// -- INIT SCHEDULES --
+			//		set all users' loke status to true, and remove Loker role every morning.
+			this.scheduleJobUtc({ hour: 6, minute: 0, second: 0 }, config.utcTimezone, () => {
+				this.mapLokere(loker => {
+					loker.status = true;
+					let r = this.getLokerRole(loker.member.guild);
+					if (r) loker.member.removeRole(r);
+				});
+			});
+			//		all users who are still marked as Loker at 12:00, gets the Loker role.
+			this.scheduleJobUtc({ hour: 12, minute: 0, second: 0 }, config.utcTimezone, () => {
+				this.mapLokere(loker => {
+					if (loker.status) {
+						let r = this.getLokerRole(loker.member.guild);
+						if (r) loker.member.addRole(r);
+					}
+				});
+			});
+
+			// if a user sends a message during the judgement period; unmark them as Loker.
+			this.client.on("message", msg => {
+				let format: string = "hh:mm";
+				let t = moment().utc().utcOffset(config.utcTimezone * 60);
+				let active: boolean = t.isBetween(moment(config.timeReset, format), moment(config.timeJudgment, format));
+				if (active) {
+					let loker = this.getLokerById(msg.member.id);
+					if (loker) loker.status = false;
+				}
+			});
+
 			this.ready = true;
 			this.trigger(BotEvent.READY);
 			
-		});
-
-		this.client.on('message', msg => {
-			if (msg.content === 'ping') {
-				msg.reply('pong');
-			}
 		});
 
 		this.client.login(auth.TOKEN);
@@ -88,13 +112,49 @@ export default class LokeBot {
 		console.log(JSON.stringify(dict, undefined, 2));
 	}
 
+	public mapLokere( callback: (loker: Loker) => void): void {
+		this.memberDict.forEach((memberMap, guildId, guildCollection) => {
+			memberMap.forEach((loker, memberId, memberCollection) => {
+				callback(loker);
+			});
+		});
+	}
+
+	private setLokeStatus(flag: boolean): void {
+		this.mapLokere(loker => {
+			loker.status = flag;
+		});
+	}
+
+	public getMemberByTag(userTag: string): GuildMember | undefined {
+		let result = undefined;
+		this.mapLokere(loker => {
+			if (loker.member.user.tag == userTag)
+				result = loker.member;
+		});
+		return result;
+	}
+
+	public getLokerById(id: string): Loker | undefined {
+		let result = undefined;
+		this.mapLokere(loker => {
+			if (loker.member.id == id)
+				result = loker;
+		});
+		return result;
+	}
+
+	public getLokerRole(guild: Guild): Role | null {
+		return guild.roles.find(role => role.name == "Loker");
+	}
+
 	/**
 	 * Create a schedule job with a UTC invocation time.
 	 * @param spec scheduling info
 	 * @param utcOffset the UTC offset of the scheduled time. I.e. Norway is UTC +01:00
 	 * @param callback callback to be executed on each invocation
 	 */
-	public scheduleUtcOffset(spec: {
+	public scheduleJobUtc(spec: {
 		year?: number, month?: number, date?: number,
 		hour?: number, minute?: number, second?: number
 	}, utcOffset: number, callback: () => void) {
@@ -161,15 +221,17 @@ export default class LokeBot {
 
 		// Look for "LokeWatchtower role on any of the channels"
 		let botRole = guild.roles.find(role => role.name == "LokeWatchtower");
-		guild.channels.forEach(c => {
-			if (c instanceof TextChannel) {
-				if (c.permissionOverwrites.has(botRole.id)) {
-					channel = c;
-					return;
+		if (botRole) {
+			guild.channels.forEach(c => {
+				if (c instanceof TextChannel) {
+					if (c.permissionOverwrites.has(botRole.id)) {
+						channel = c;
+						return;
+					}
 				}
-			}
-		});
-		if (channel) return channel;
+			});
+			if (channel) return channel;
+		}
 
 		// Look for "lokebot" in any of the channel names
 		guild.channels.forEach(c => {

@@ -1,4 +1,6 @@
 {
     "prefix": "!",
-    "roleId": "546729280969637888"
+    "utcTimezone": 1,
+    "timeReset": "06:00",
+    "timeJudgment": "12:00"
 }
