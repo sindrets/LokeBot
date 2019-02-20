@@ -1,4 +1,5 @@
-import { Client, TextChannel, Guild, GuildChannel } from "discord.js";
+import { Client, TextChannel, Guild, GuildChannel, GuildMember } from "discord.js";
+import { BotEvent } from "./Constants";
 import moment from "moment";
 import schedule from "node-schedule";
 import Long from "long";
@@ -6,36 +7,35 @@ const config = require("../src/settings.json");
 const auth = require("../auth.json");
 
 interface Loker {
-	id: string
+	member: GuildMember,
+	status: boolean
 }
+
+type MemberCollection = Map<string, Map<string, Loker>>;
+type EventListenerDict = { [key: string]: Function[] };
 
 export default class LokeBot {
 
-	private client: Client;
-	private lokeList: Loker[] = [];
+	private ready: boolean = false;
+	private memberDict!: MemberCollection; // Map keys should be the guild id, and member id respectively
+	private eventListeners: EventListenerDict = {};
+	
+	public client: Client;
 
 	constructor() {
 		this.client = new Client();
 	}
 
 	public start(): void {
-		let lokeChat: TextChannel | undefined;
+		
 		this.client.on('ready', () => {
+
 			console.log(`Logged in as ${this.client.user.tag}!`);
+			this.populateMemberDict();
 
-			// console.log("\n\n\n---MEMBERS---");
-			// console.log(this.client.guilds.array()[0].members);
-			// console.log("\n\n\n---CHANNELS---");
-			// this.client.guilds.array()[0].channels.forEach((c) => {
-			// 	console.log(c);
-			// });
-			// console.log("\n\n\n");
-			// console.log(LokeBot.getBotChannel(this.client.guilds.array()[0]));
-
-			lokeChat = LokeBot.getBotChannel(this.client.guilds.array()[0]);
-			this.scheduleUtcOffset({hour: 17, second: 0}, -1, () => {
-				console.log("Current time UTC offset -1: " + moment().utcOffset(0).toString());
-			});
+			this.ready = true;
+			this.trigger(BotEvent.READY);
+			
 		});
 
 		this.client.on('message', msg => {
@@ -47,19 +47,69 @@ export default class LokeBot {
 		this.client.login(auth.TOKEN);
 	}
 
-	private scheduleUtcOffset(spec: {year?: number, month?: number, date?: number, hour?: number, minute?: number, second?: number}, utcOffset: number, callback: ()=>void) {
+	private populateMemberDict(): void {
+		this.memberDict = new Map<string, Map<string, Loker>>();
+		this.client.guilds.forEach((guild, id, collection) => {
+
+			let resultMap: Map<string, Loker> = new Map<string, Loker>();
+			guild.members.forEach((member, id, collection) => {
+				if (!member.user.bot) {
+					resultMap.set(id, { member: member, status: false });
+				}
+			});
+			this.memberDict.set(id, resultMap);
+		});
+	}
+
+	public prettyPrintMemberDict(): void {
+		let dict: {
+			[key: string]: {					//	guildName: {
+				[key: string]: {				//		memberName: {
+					lokeStatus: boolean,		//			
+					id: string					//	
+				}								//		}
+			}									//	}
+		} = {};
+
+		this.memberDict.forEach((memberMap, guildId, guildCollection) => {
+			let currentGuild = this.client.guilds.get(guildId);
+			if (currentGuild) {
+				dict[currentGuild.name] = {};
+				memberMap.forEach((loker, memberId, lokerCollection) => {
+					// @ts-ignore
+					dict[currentGuild.name][loker.member.user.username] = { 
+						lokeStatus: loker.status, 
+						id: loker.member.id 
+					}
+				});
+			}
+		});
+
+		console.log(JSON.stringify(dict, undefined, 2));
+	}
+
+	/**
+	 * Create a schedule job with a UTC invocation time.
+	 * @param spec scheduling info
+	 * @param utcOffset the UTC offset of the scheduled time. I.e. Norway is UTC +01:00
+	 * @param callback callback to be executed on each invocation
+	 */
+	public scheduleUtcOffset(spec: {
+		year?: number, month?: number, date?: number,
+		hour?: number, minute?: number, second?: number
+	}, utcOffset: number, callback: () => void) {
+
 		let t = moment().utc();
-		
+
 		if (spec.year != undefined) t.set("year", spec.year);
-		if (spec.month != undefined) t.set("month", spec.month-1);
-		if (spec.date != undefined) t.set("date", spec.date-1);
+		if (spec.month != undefined) t.set("month", spec.month - 1);
+		if (spec.date != undefined) t.set("date", spec.date - 1);
 		if (spec.hour != undefined) t.set("hour", spec.hour);
 		if (spec.minute != undefined) t.set("minute", spec.minute);
 		if (spec.second != undefined) t.set("second", spec.second);
 
 		let currentOffset = new Date().getTimezoneOffset();
 		t.utcOffset(-currentOffset - (utcOffset * 60));
-		console.log(t.toString());
 
 		let rule = new schedule.RecurrenceRule();
 		if (spec.year != undefined) rule.year = t.get("year");
@@ -69,8 +119,34 @@ export default class LokeBot {
 		if (spec.minute != undefined) rule.minute = t.get("minute");
 		if (spec.second != undefined) rule.second = t.get("second");
 
-		console.log(rule);
 		schedule.scheduleJob(rule, callback);
+	}
+
+	/**
+	 * Add an event listener.
+	 * @param event Event identifier.
+	 * @param listener A callback method invocated on the event trigger.
+	 */
+	public on(event: string | BotEvent, listener: (...args: any[]) => void): this {
+		if (!this.eventListeners[event]) this.eventListeners[event] = [];
+		this.eventListeners[event].push(listener);
+		return this;
+	}
+
+	/**
+	 * Trigger an event.
+	 * @param event Event identifier.
+	 * @param args Arguments passed to the listener callback.
+	 */
+	private trigger(event: string | BotEvent, ...args: any[]): void {
+		if (!this.eventListeners[event]) return;
+		this.eventListeners[event].forEach((listener, index) => {
+			listener(args);
+		});
+	}
+
+	public isReady(): boolean {
+		return this.ready;
 	}
 
 	/**
