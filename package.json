@@ -5,7 +5,7 @@
   "main": "out/Main.js",
   "scripts": {
     "start": "node out/Main.js",
-    "test": "node out/tests/debugging.js"
+    "test": "node out/tests/testRunner.js"
   },
   "repository": {
     "type": "git",
@@ -18,15 +18,20 @@
   },
   "homepage": "https://github.com/sindrets/LokeBot#readme",
   "dependencies": {
+    "assert": "^1.4.1",
     "discord.js": "^11.4.2",
     "long": "^4.0.0",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.23",
-    "node-schedule": "^1.3.2"
+    "mongodb": "^3.1.13",
+    "node-schedule": "^1.3.2",
+    "sprintf-js": "^1.1.2"
   },
   "devDependencies": {
     "@types/long": "^4.0.0",
+    "@types/mongodb": "^3.1.19",
     "@types/node": "^11.9.4",
-    "@types/node-schedule": "^1.2.3"
+    "@types/node-schedule": "^1.2.3",
+    "@types/sprintf-js": "^1.1.2"
   }
 }

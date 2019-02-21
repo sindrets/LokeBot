@@ -1,10 +1,11 @@
 import LokeBot from "../LokeBot";
-import { TextChannel } from "discord.js";
+import { TextChannel, Message } from "discord.js";
 import moment = require("moment");
 import { BotEvent } from "../Constants";
+import { EventHandler } from "src/EventHandler";
 
 const bot = new LokeBot();
-bot.on(BotEvent.READY, () => {
+EventHandler.on(BotEvent.BOT_READY, () => {
 
     let lokeChat: TextChannel | undefined;
 
@@ -28,6 +29,10 @@ bot.on(BotEvent.READY, () => {
         if (msg.content === 'ping') {
             msg.reply('pong');
         }
+    });
+
+    bot.commandHandler.addCommand("test", (msg, args) => {
+        msg.reply(`Command Parser: Command recognised, parsed and executed with args: ${args}`);
     });
     
 });

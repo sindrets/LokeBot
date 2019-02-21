@@ -1,29 +1,30 @@
-import { Client, TextChannel, Guild, GuildChannel, GuildMember, Role } from "discord.js";
+import { Client, TextChannel, Guild, GuildChannel, GuildMember, Role, User } from "discord.js";
 import { BotEvent } from "./Constants";
 import moment from "moment";
-import schedule from "node-schedule";
+import schedule, { Job } from "node-schedule";
 import Long from "long";
-import config from "./settings.json";
-import auth from "../auth.json";
-
-interface Loker {
-	member: GuildMember,
-	status: boolean
-}
-
-type MemberCollection = Map<string, Map<string, Loker>>;
-type EventListenerDict = { [key: string]: Function[] };
+import config from "./config.json";
+import auth from "./auth.json";
+import { CommandHandler } from "./CommandHandler";
+import { DbRemote } from "./DbRemote";
+import { EventHandler } from "./EventHandler";
+import { MemberCollection, EventListenerDict, Loker } from "./Interfaces";
 
 export default class LokeBot {
 
 	private ready: boolean = false;
 	private memberDict!: MemberCollection; // Map keys should be the guild id, and member id respectively
-	private eventListeners: EventListenerDict = {};
 	
 	public client: Client;
+	public dbRemote: DbRemote;
+	public commandHandler!: CommandHandler;
 
 	constructor() {
 		this.client = new Client();
+		this.dbRemote = new DbRemote();
+		this.commandHandler = new CommandHandler(this);
+
+		process.on('SIGINT', () => { this.shutdown() });
 	}
 
 	public start(): void {
@@ -35,28 +36,61 @@ export default class LokeBot {
 
 			// -- INIT SCHEDULES --
 			//		set all users' loke status to true, and remove Loker role every morning.
-			this.scheduleJobUtc({ hour: 6, minute: 0, second: 0 }, config.utcTimezone, () => {
+			this.scheduleJobUtc("Reset Loke-Status", { hour: parseInt(config.periodStart), minute: 0, second: 0 }, config.utcTimezone, () => {
 				this.mapLokere(loker => {
 					loker.status = true;
+					// TODO: ensure that the Loke role exists in the guild.
 					let r = this.getLokerRole(loker.member.guild);
 					if (r) loker.member.removeRole(r);
 				});
 			});
-			//		all users who are still marked as Loker at 12:00, gets the Loker role.
-			this.scheduleJobUtc({ hour: 12, minute: 0, second: 0 }, config.utcTimezone, () => {
+			//		all users who are still marked as Loker at periodEnd, gets the Loker role.
+			this.scheduleJobUtc("Prosecute Lokere", { hour: parseInt(config.periodEnd), minute: 0, second: 0 }, config.utcTimezone, () => {
+				
 				this.mapLokere(loker => {
 					if (loker.status) {
 						let r = this.getLokerRole(loker.member.guild);
 						if (r) loker.member.addRole(r);
 					}
 				});
+
+				this.memberDict.forEach((memberMap, guild, guildCollection) => {
+					let lokerList: User[] = [];
+					memberMap.forEach((loker, memberId, memberCollection) => {
+						if (loker.status) {
+							let r = this.getLokerRole(loker.member.guild);
+							if (r) loker.member.addRole(r);
+							lokerList.push(loker.member.user);
+							this.dbRemote.addLokeDay(loker.member.user.tag);
+						}
+					});
+
+					let channel = LokeBot.getBotChannel(guild);
+					if (channel) {
+						if (lokerList.length > 0) {
+							channel.send("⚠ DAGENS LOKERE ER DØMT! ⚠");
+							let s = "";
+							lokerList.forEach(user => {
+								s += `${user} `;
+							});
+							channel.send(s);
+						} else {
+							channel.send("Ingen lokere i dag! 🤔");
+						}
+					}
+				})
+				this.logNextInvocations();
 			});
+
+			this.logNextInvocations();
 
 			// if a user sends a message during the judgement period; unmark them as Loker.
 			this.client.on("message", msg => {
+				this.commandHandler.parseCommand(msg);
+
 				let format: string = "hh:mm";
 				let t = moment().utc().utcOffset(config.utcTimezone * 60);
-				let active: boolean = t.isBetween(moment(config.timeReset, format), moment(config.timeJudgment, format));
+				let active: boolean = t.isBetween(moment(config.periodStart, format), moment(config.periodEnd, format));
 				if (active) {
 					let loker = this.getLokerById(msg.member.id);
 					if (loker) loker.status = false;
@@ -64,15 +98,23 @@ export default class LokeBot {
 			});
 
 			this.ready = true;
-			this.trigger(BotEvent.READY);
+			EventHandler.trigger(BotEvent.BOT_READY);
 			
 		});
+
+		this.dbRemote.connect();
 
 		this.client.login(auth.TOKEN);
 	}
 
+	public logNextInvocations(): void {
+		for (let job in schedule.scheduledJobs) {
+			console.log(`Job <${job}> next invocation: ` + schedule.scheduledJobs[job].nextInvocation());
+		}
+	}
+
 	private populateMemberDict(): void {
-		this.memberDict = new Map<string, Map<string, Loker>>();
+		this.memberDict = new Map<Guild, Map<string, Loker>>();
 		this.client.guilds.forEach((guild, id, collection) => {
 
 			let resultMap: Map<string, Loker> = new Map<string, Loker>();
@@ -81,7 +123,7 @@ export default class LokeBot {
 					resultMap.set(id, { member: member, status: false });
 				}
 			});
-			this.memberDict.set(id, resultMap);
+			this.memberDict.set(guild, resultMap);
 		});
 	}
 
@@ -95,25 +137,21 @@ export default class LokeBot {
 			}									//	}
 		} = {};
 
-		this.memberDict.forEach((memberMap, guildId, guildCollection) => {
-			let currentGuild = this.client.guilds.get(guildId);
-			if (currentGuild) {
-				dict[currentGuild.name] = {};
-				memberMap.forEach((loker, memberId, lokerCollection) => {
-					// @ts-ignore
-					dict[currentGuild.name][loker.member.user.username] = { 
-						lokeStatus: loker.status, 
-						id: loker.member.id 
-					}
-				});
-			}
+		this.memberDict.forEach((memberMap, guild, guildCollection) => {
+			dict[guild.name] = {};
+			memberMap.forEach((loker, memberId, lokerCollection) => {
+				dict[guild.name][loker.member.user.username] = { 
+					lokeStatus: loker.status, 
+					id: loker.member.id 
+				}
+			});
 		});
 
 		console.log(JSON.stringify(dict, undefined, 2));
 	}
 
 	public mapLokere( callback: (loker: Loker) => void): void {
-		this.memberDict.forEach((memberMap, guildId, guildCollection) => {
+		this.memberDict.forEach((memberMap, guild, guildCollection) => {
 			memberMap.forEach((loker, memberId, memberCollection) => {
 				callback(loker);
 			});
@@ -148,16 +186,25 @@ export default class LokeBot {
 		return guild.roles.find(role => role.name == "Loker");
 	}
 
+	public async shutdown(): Promise<void> {
+		console.log("Closing connections and shutting down...");
+		await this.client.destroy();
+		await this.dbRemote.closeConnection();
+		console.log("Successfully closed all connections!");
+		process.exit(0);
+	}
+
 	/**
 	 * Create a schedule job with a UTC invocation time.
+	 * @param name name of the new Job
 	 * @param spec scheduling info
 	 * @param utcOffset the UTC offset of the scheduled time. I.e. Norway is UTC +01:00
 	 * @param callback callback to be executed on each invocation
 	 */
-	public scheduleJobUtc(spec: {
+	public scheduleJobUtc(name: string, spec: {
 		year?: number, month?: number, date?: number,
 		hour?: number, minute?: number, second?: number
-	}, utcOffset: number, callback: () => void) {
+	}, utcOffset: number, callback: () => void): Job {
 
 		let t = moment().utc();
 
@@ -179,30 +226,7 @@ export default class LokeBot {
 		if (spec.minute != undefined) rule.minute = t.get("minute");
 		if (spec.second != undefined) rule.second = t.get("second");
 
-		schedule.scheduleJob(rule, callback);
-	}
-
-	/**
-	 * Add an event listener.
-	 * @param event Event identifier.
-	 * @param listener A callback method invocated on the event trigger.
-	 */
-	public on(event: string | BotEvent, listener: (...args: any[]) => void): this {
-		if (!this.eventListeners[event]) this.eventListeners[event] = [];
-		this.eventListeners[event].push(listener);
-		return this;
-	}
-
-	/**
-	 * Trigger an event.
-	 * @param event Event identifier.
-	 * @param args Arguments passed to the listener callback.
-	 */
-	private trigger(event: string | BotEvent, ...args: any[]): void {
-		if (!this.eventListeners[event]) return;
-		this.eventListeners[event].forEach((listener, index) => {
-			listener(args);
-		});
+		return schedule.scheduleJob(name, rule, callback);
 	}
 
 	public isReady(): boolean {
