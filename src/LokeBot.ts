@@ -214,10 +214,17 @@ export default class LokeBot {
 		return result;
 	}
 
-	public isDevAdmin(userId: string): boolean {
+	/**
+	 * Returns true if the users ID is registered as a dev admin.
+	 * @param user either a user id string, or a `User` object.
+	 */
+	public isDevAdmin(user: string | User): boolean {
 		let result = false;
+		let uid = "";
+		if (user instanceof User) uid = user.id;
+		else uid = user;
 		auth.DEV_ADMINS.forEach((id, index, c) => {
-			if (userId == id) {
+			if (uid == id) {
 				result = true;
 				return;
 			}
@@ -231,6 +238,17 @@ export default class LokeBot {
 		await this.dbRemote.closeConnection();
 		console.log("Successfully closed all connections!");
 		process.exit(0);
+	}
+
+	public restart(): void {
+		process.on("exit", function () {
+			require("child_process").spawn(process.argv.shift(), process.argv, {
+				cwd: process.cwd(),
+				detached : true,
+				stdio: "inherit"
+			});
+		});
+		process.exit();
 	}
 
 	/**

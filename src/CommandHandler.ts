@@ -1,10 +1,9 @@
 import { Command } from "./Constants";
 import config from "./config.json";
-import { Message } from "discord.js";
+import { Message, GuildMember } from "discord.js";
 import LokeBot from "./LokeBot";
-import moment = require("moment");
-import auth from "./auth.json";
-import { IndexedLokeBot } from "./Interfaces";
+import moment from "moment";
+import stringifyObject from "stringify-object";
 
 type CmdHandlerDict = { [key: string]: (msg: Message, ...args: any[]) => void };
 
@@ -26,21 +25,24 @@ export class CommandHandler {
 		 */
 		this.addCommand("stats", (msg, args) => {
 			let tag = msg.author.tag;
+			let target: GuildMember | null;
 			// @param arg[0] user query.
 			if (args[0] != undefined) {
-				let result = this.parent.queryUser(args[0]);
-				if (result) tag = result.user.tag;
+				target = this.parent.queryUser(args[0]);
+				if (target) tag = target.user.tag;
 			}
 			this.parent.dbRemote.getOneLokerStats(tag, doc => {
 				if (doc && doc.meanderDays.length > 0) {
-					let s = `Antall registrerte lokedager: ${doc.meanderDays.length}`;
+					let s = (target) ? target.displayName + "'s" : "Antall";
+					s += ` registrerte lokedager: ${doc.meanderDays.length}`;
 					doc.meanderDays.forEach((date, index, c) => {
 						let t = moment(date).utc().utcOffset(config.utcTimezone);
 						s += "\n" + t.toString();
 					})
 					msg.reply(s);
 				} else {
-					msg.reply("Du har ingen registrerte lokedager!");
+					let s = (target) ? target.displayName : "Du";
+					msg.reply(s + " har ingen registrerte lokedager!");
 				}
 			})
 		});
@@ -50,6 +52,7 @@ export class CommandHandler {
 
 			if (args) {
 				let bot = this.parent; // for use in eval
+				let stringify = stringifyObject; // for use in eval
 				let arg = (args as string[]).join(" ");
 				let result = "";
 				try {
@@ -70,6 +73,10 @@ export class CommandHandler {
 			console.error(`That command has already been added: ${cmd}`);
 			return;
 		}
+		this.handlers[cmd] = listener;
+	}
+
+	public forceAddCommand(cmd: string, listener: (msg: Message, ...args: any[]) => void): void {
 		this.handlers[cmd] = listener;
 	}
 
