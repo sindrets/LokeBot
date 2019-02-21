@@ -3,6 +3,8 @@ import config from "./config.json";
 import { Message } from "discord.js";
 import LokeBot from "./LokeBot";
 import moment = require("moment");
+import auth from "./auth.json";
+import { IndexedLokeBot } from "./Interfaces";
 
 type CmdHandlerDict = { [key: string]: (msg: Message, ...args: any[]) => void };
 
@@ -18,10 +20,19 @@ export class CommandHandler {
 
 	private initCommands(): void {
 
-		this.addCommand("stats", msg => {
+		/**
+		 * if additional arg is supplied: query stats for that user.
+		 * @param args[0] user query 
+		 */
+		this.addCommand("stats", (msg, args) => {
 			let tag = msg.author.tag;
+			// @param arg[0] user query.
+			if (args[0] != undefined) {
+				let result = this.parent.queryUser(args[0]);
+				if (result) tag = result.user.tag;
+			}
 			this.parent.dbRemote.getOneLokerStats(tag, doc => {
-				if (doc) {
+				if (doc && doc.meanderDays.length > 0) {
 					let s = `Antall registrerte lokedager: ${doc.meanderDays.length}`;
 					doc.meanderDays.forEach((date, index, c) => {
 						let t = moment(date).utc().utcOffset(config.utcTimezone);
@@ -32,6 +43,24 @@ export class CommandHandler {
 					msg.reply("Du har ingen registrerte lokedager!");
 				}
 			})
+		});
+
+		this.addCommand("eval", (msg, args) => {
+			if (msg.guild != null || !this.parent.isDevAdmin(msg.author.id)) return;
+
+			if (args) {
+				let bot = this.parent; // for use in eval
+				let arg = (args as string[]).join(" ");
+				let result = "";
+				try {
+					result = eval(arg);
+				} catch (e) {
+					result = (e as Error).message + "\n\n" + (e as Error).stack;
+				}
+				console.log("EVAL OUPUT for: " + arg);
+				console.log(result);
+				msg.author.send("```\n" + result + "\n```");
+			}
 		});
 		
 	}
@@ -55,9 +84,9 @@ export class CommandHandler {
 		// ensure that command starts with prefix
 		if (content.substring(0, config.prefix.length) != config.prefix) return;
 
-		let args = content.substr(config.prefix.length).split(" ");
+		let args = content.substr(config.prefix.length).trim().replace(/ +(?= )/g, "").split(" "); // trim and remove all multiple spaces
 		let cmd = args.splice(0,1)[0];
-		this.runCommand(cmd, msg, args);
+		this.runCommand(cmd, msg, ...args);
 	}
 	
 }

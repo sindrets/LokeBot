@@ -8,7 +8,7 @@ import auth from "./auth.json";
 import { CommandHandler } from "./CommandHandler";
 import { DbRemote } from "./DbRemote";
 import { EventHandler } from "./EventHandler";
-import { MemberCollection, EventListenerDict, Loker } from "./Interfaces";
+import { MemberCollection, Loker } from "./Interfaces";
 
 export default class LokeBot {
 
@@ -24,7 +24,10 @@ export default class LokeBot {
 		this.dbRemote = new DbRemote();
 		this.commandHandler = new CommandHandler(this);
 
-		process.on('SIGINT', () => { this.shutdown() });
+		process.on("SIGINT", () => { this.shutdown() });
+		process.on("SIGKILL", () => { this.shutdown() });
+		process.on("SIGSTOP", () => { this.shutdown() });
+		process.on("SIGABRT", () => { this.shutdown() });
 	}
 
 	public start(): void {
@@ -37,6 +40,8 @@ export default class LokeBot {
 			// -- INIT SCHEDULES --
 			//		set all users' loke status to true, and remove Loker role every morning.
 			this.scheduleJobUtc("Reset Loke-Status", { hour: parseInt(config.periodStart), minute: 0, second: 0 }, config.utcTimezone, () => {
+				
+				console.log("Resetting Loke roles...");
 				this.mapLokere(loker => {
 					loker.status = true;
 					// TODO: ensure that the Loke role exists in the guild.
@@ -47,6 +52,7 @@ export default class LokeBot {
 			//		all users who are still marked as Loker at periodEnd, gets the Loker role.
 			this.scheduleJobUtc("Prosecute Lokere", { hour: parseInt(config.periodEnd), minute: 0, second: 0 }, config.utcTimezone, () => {
 				
+				console.log("Prosecuting lokere...");
 				this.mapLokere(loker => {
 					if (loker.status) {
 						let r = this.getLokerRole(loker.member.guild);
@@ -92,7 +98,7 @@ export default class LokeBot {
 				let t = moment().utc().utcOffset(config.utcTimezone * 60);
 				let active: boolean = t.isBetween(moment(config.periodStart, format), moment(config.periodEnd, format));
 				if (active) {
-					let loker = this.getLokerById(msg.member.id);
+					let loker = this.getLokerById(msg.author.id);
 					if (loker) loker.status = false;
 				}
 			});
@@ -184,6 +190,39 @@ export default class LokeBot {
 
 	public getLokerRole(guild: Guild): Role | null {
 		return guild.roles.find(role => role.name == "Loker");
+	}
+
+	public queryUser(identifier: string, strict=false): GuildMember | null {
+		let result: GuildMember | null = null;
+		this.mapLokere(loker => {
+			switch (strict) {
+				case false:
+					if (loker.member.nickname && loker.member.nickname.toLowerCase().indexOf(identifier.toLowerCase()) != -1)
+						result = loker.member;
+					else if (loker.member.user.username.toLowerCase().indexOf(identifier.toLowerCase()) != -1)
+						result = loker.member;
+					break;
+				case true:
+					if (loker.member.nickname == identifier)
+						result = loker.member;
+					else if (loker.member.user.username == identifier)
+						result = loker.member;
+					break;
+			}
+		})
+
+		return result;
+	}
+
+	public isDevAdmin(userId: string): boolean {
+		let result = false;
+		auth.DEV_ADMINS.forEach((id, index, c) => {
+			if (userId == id) {
+				result = true;
+				return;
+			}
+		});
+		return result;
 	}
 
 	public async shutdown(): Promise<void> {

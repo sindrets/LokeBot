@@ -51,10 +51,10 @@ export class DbRemote {
 		}
 	}
 
-	public getAllLokerStats(callback: (doc: LokerStatDoc[] | null) => void): void {
+	public getAllLokerStats(callback?: (doc: LokerStatDoc[] | null) => void): void {
 		if (this.lokeStats) {
 			this.lokeStats.find({}).toArray((err, doc) => {
-				callback(doc);
+				if (callback) callback(doc);
 			});
 		}
 	}
