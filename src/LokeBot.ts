@@ -9,15 +9,16 @@ import { CommandHandler } from "./CommandHandler";
 import { DbRemote } from "./DbRemote";
 import { EventHandler } from "./EventHandler";
 import { MemberCollection, Loker } from "./Interfaces";
+import { initBehaviour } from "./Behaviour";
 
 export default class LokeBot {
 
 	private ready: boolean = false;
-	private memberDict!: MemberCollection; // Map keys should be the guild id, and member id respectively
 	
+	public memberDict!: MemberCollection; // Map keys should be the guild id, and member id respectively
 	public client: Client;
 	public dbRemote: DbRemote;
-	public commandHandler!: CommandHandler;
+	public commandHandler: CommandHandler;
 
 	constructor() {
 		this.client = new Client();
@@ -35,73 +36,10 @@ export default class LokeBot {
 		this.client.on('ready', () => {
 
 			console.log(`Logged in as ${this.client.user.tag}!`);
+			
 			this.populateMemberDict();
-
-			// -- INIT SCHEDULES --
-			//		set all users' loke status to true, and remove Loker role every morning.
-			this.scheduleJobUtc("Reset Loke-Status", { hour: parseInt(config.periodStart), minute: 0, second: 0 }, config.utcTimezone, () => {
-				
-				console.log("Resetting Loke roles...");
-				this.mapLokere(loker => {
-					loker.status = true;
-					// TODO: ensure that the Loke role exists in the guild.
-					let r = this.getLokerRole(loker.member.guild);
-					if (r) loker.member.removeRole(r);
-				});
-			});
-			//		all users who are still marked as Loker at periodEnd, gets the Loker role.
-			this.scheduleJobUtc("Prosecute Lokere", { hour: parseInt(config.periodEnd), minute: 0, second: 0 }, config.utcTimezone, () => {
-				
-				console.log("Prosecuting lokere...");
-				this.mapLokere(loker => {
-					if (loker.status) {
-						let r = this.getLokerRole(loker.member.guild);
-						if (r) loker.member.addRole(r);
-					}
-				});
-
-				this.memberDict.forEach((memberMap, guild, guildCollection) => {
-					let lokerList: User[] = [];
-					memberMap.forEach((loker, memberId, memberCollection) => {
-						if (loker.status) {
-							let r = this.getLokerRole(loker.member.guild);
-							if (r) loker.member.addRole(r);
-							lokerList.push(loker.member.user);
-							this.dbRemote.addLokeDay(loker.member.user.tag);
-						}
-					});
-
-					let channel = LokeBot.getBotChannel(guild);
-					if (channel) {
-						if (lokerList.length > 0) {
-							channel.send("⚠ DAGENS LOKERE ER DØMT! ⚠");
-							let s = "";
-							lokerList.forEach(user => {
-								s += `${user} `;
-							});
-							channel.send(s);
-						} else {
-							channel.send("Ingen lokere i dag! 🤔");
-						}
-					}
-				})
-				this.logNextInvocations();
-			});
-
+			initBehaviour(this);
 			this.logNextInvocations();
-
-			// if a user sends a message during the judgement period; unmark them as Loker.
-			this.client.on("message", msg => {
-				this.commandHandler.parseCommand(msg);
-
-				let format: string = "hh:mm";
-				let t = moment().utc().utcOffset(config.utcTimezone * 60);
-				let active: boolean = t.isBetween(moment(config.periodStart, format), moment(config.periodEnd, format));
-				if (active) {
-					let loker = this.getLokerById(msg.author.id);
-					if (loker) loker.status = false;
-				}
-			});
 
 			this.ready = true;
 			EventHandler.trigger(BotEvent.BOT_READY);

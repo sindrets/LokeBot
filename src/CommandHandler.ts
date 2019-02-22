@@ -4,6 +4,7 @@ import { Message, GuildMember } from "discord.js";
 import LokeBot from "./LokeBot";
 import moment from "moment";
 import stringifyObject from "stringify-object";
+import { manual } from "./Manual";
 
 type CmdHandlerDict = { [key: string]: (msg: Message, ...args: any[]) => void };
 
@@ -24,13 +25,16 @@ export class CommandHandler {
 		 * @param args[0] user query 
 		 */
 		this.addCommand("stats", (msg, args) => {
+
 			let tag = msg.author.tag;
 			let target: GuildMember | null;
+
 			// @param arg[0] user query.
 			if (args[0] != undefined) {
 				target = this.parent.queryUser(args[0]);
 				if (target) tag = target.user.tag;
 			}
+
 			this.parent.dbRemote.getOneLokerStats(tag, doc => {
 				if (doc && doc.meanderDays.length > 0) {
 					let s = (target) ? target.displayName + "'s" : "Antall";
@@ -45,9 +49,38 @@ export class CommandHandler {
 					msg.reply(s + " har ingen registrerte lokedager!");
 				}
 			})
+
 		});
 
+		this.addCommand("help", (msg, args) => {
+
+			let s: string[] = [""];
+			if (args[0]) {
+				let cmd = (args[0] as string).toLowerCase();
+				if (manual[cmd] != undefined) {
+					s[0] = manual[cmd];
+				} else {
+					s[0] = "/**\n * There was no command by that name in the manual. \n */";
+				}
+			} else {
+				s = [];
+				for (let cmd in manual) {
+					s.push(manual[cmd]);
+				}
+			}
+
+			if (msg.guild) msg.reply("Manual oppslag ble sendt som DM.");
+			s.forEach((helpString, i, c) => {
+				msg.author.send("```java\n" + helpString + "\n```");
+			})
+			
+		})
+
+		/**
+		 * Debugging command. Evaluate and run javascript on the server.
+		 */
 		this.addCommand("eval", (msg, args) => {
+
 			if (msg.guild != null || !this.parent.isDevAdmin(msg.author.id)) return;
 
 			if (args) {
@@ -64,6 +97,7 @@ export class CommandHandler {
 				console.log(result);
 				msg.author.send("```\n" + result + "\n```");
 			}
+
 		});
 		
 	}
