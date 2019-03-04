@@ -1,4 +1,4 @@
-import { Guild, GuildMember } from "discord.js";
+import { Guild, GuildMember, User } from "discord.js";
 import LokeBot from "./LokeBot";
 
 export interface Loker {
@@ -20,4 +20,5 @@ export interface IndexedLokeBot extends LokeBot {
 	[key: string]: any;
 }
 
-export type MemberCollection = Map<Guild, Map<string, Loker>>;
+export type GuildMap = Map<Guild, Map<string, Loker>>;
+export type MemberMap = Map<User, Guild[]>;

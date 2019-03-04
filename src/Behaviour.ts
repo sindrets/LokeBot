@@ -8,13 +8,6 @@ export function initBehaviour(bot: LokeBot): void {
 	// -- INIT SCHEDULES --
 	//		set all users' loke status to true, and remove Loker role every morning.
 	bot.scheduleJobUtc("Reset Loke-Status", { hour: parseInt(config.periodStart), minute: 0, second: 0 }, config.utcTimezone, () => {
-
-		// ignore saturdays and sundays.
-		let now = moment().utc().weekday();
-		if (now == 0 || now == 6) {
-			bot.logNextInvocations();
-			return;
-		}
 		
 		console.log("Resetting Loke roles...");
 		bot.mapLokere(loker => {
@@ -42,7 +35,7 @@ export function initBehaviour(bot: LokeBot): void {
 			}
 		});
 
-		bot.memberDict.forEach((memberMap, guild, guildCollection) => {
+		bot.guildMap.forEach((memberMap, guild, guildCollection) => {
 			let lokerList: User[] = [];
 			memberMap.forEach((loker, memberId, memberCollection) => {
 				if (loker.status) {

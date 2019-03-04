@@ -65,3 +65,6 @@ auth.json
 
 # compiled output
 out/**/*
+
+# misc
+.directory

@@ -3,19 +3,19 @@ import { BotEvent } from "./Constants";
 import moment from "moment";
 import schedule, { Job } from "node-schedule";
 import Long from "long";
-import config from "./config.json";
 import auth from "./auth.json";
 import { CommandHandler } from "./CommandHandler";
 import { DbRemote } from "./DbRemote";
 import { EventHandler } from "./EventHandler";
-import { MemberCollection, Loker } from "./Interfaces";
+import { GuildMap, Loker, MemberMap } from "./Interfaces";
 import { initBehaviour } from "./Behaviour";
 
 export default class LokeBot {
 
 	private ready: boolean = false;
 	
-	public memberDict!: MemberCollection; // Map keys should be the guild id, and member id respectively
+	public guildMap!: GuildMap;
+	public memberMap!: MemberMap;
 	public client: Client;
 	public dbRemote: DbRemote;
 	public commandHandler: CommandHandler;
@@ -26,8 +26,6 @@ export default class LokeBot {
 		this.commandHandler = new CommandHandler(this);
 
 		process.on("SIGINT", () => { this.shutdown() });
-		process.on("SIGKILL", () => { this.shutdown() });
-		process.on("SIGSTOP", () => { this.shutdown() });
 		process.on("SIGABRT", () => { this.shutdown() });
 	}
 
@@ -37,7 +35,8 @@ export default class LokeBot {
 
 			console.log(`Logged in as ${this.client.user.tag}!`);
 			
-			this.populateMemberDict();
+			this.populateGuildMap();
+			this.populateMemberMap();
 			initBehaviour(this);
 			this.logNextInvocations();
 
@@ -57,8 +56,8 @@ export default class LokeBot {
 		}
 	}
 
-	private populateMemberDict(): void {
-		this.memberDict = new Map<Guild, Map<string, Loker>>();
+	private populateGuildMap(): void {
+		this.guildMap = new Map<Guild, Map<string, Loker>>();
 		this.client.guilds.forEach((guild, id, collection) => {
 
 			let resultMap: Map<string, Loker> = new Map<string, Loker>();
@@ -67,8 +66,25 @@ export default class LokeBot {
 					resultMap.set(id, { member: member, status: false });
 				}
 			});
-			this.memberDict.set(guild, resultMap);
+			this.guildMap.set(guild, resultMap);
 		});
+	}
+
+	private populateMemberMap(): void {
+
+		this.memberMap = new Map<User, Guild[]>();
+
+		this.client.guilds.forEach((guild, gId, collection) => {
+			guild.members.forEach((member, mId, collection) => {
+				let guildList = this.memberMap.get(member.user);
+				if (guildList == undefined) {
+					this.memberMap.set(member.user, [guild]);
+				} else {
+					guildList.push(guild);
+				}
+			})
+		});
+		
 	}
 
 	public prettyPrintMemberDict(): void {
@@ -81,7 +97,7 @@ export default class LokeBot {
 			}									//	}
 		} = {};
 
-		this.memberDict.forEach((memberMap, guild, guildCollection) => {
+		this.guildMap.forEach((memberMap, guild, guildCollection) => {
 			dict[guild.name] = {};
 			memberMap.forEach((loker, memberId, lokerCollection) => {
 				dict[guild.name][loker.member.user.username] = { 
@@ -95,7 +111,7 @@ export default class LokeBot {
 	}
 
 	public mapLokere( callback: (loker: Loker) => void): void {
-		this.memberDict.forEach((memberMap, guild, guildCollection) => {
+		this.guildMap.forEach((memberMap, guild, guildCollection) => {
 			memberMap.forEach((loker, memberId, memberCollection) => {
 				callback(loker);
 			});
@@ -131,25 +147,43 @@ export default class LokeBot {
 	}
 
 	public queryUser(identifier: string, strict=false): GuildMember | null {
+
 		let result: GuildMember | null = null;
+
 		this.mapLokere(loker => {
-			switch (strict) {
-				case false:
-					if (loker.member.nickname && loker.member.nickname.toLowerCase().indexOf(identifier.toLowerCase()) != -1)
-						result = loker.member;
-					else if (loker.member.user.username.toLowerCase().indexOf(identifier.toLowerCase()) != -1)
-						result = loker.member;
-					break;
-				case true:
-					if (loker.member.nickname == identifier)
-						result = loker.member;
-					else if (loker.member.user.username == identifier)
-						result = loker.member;
-					break;
+			if (!strict) {
+				if (loker.member.nickname && loker.member.nickname.toLowerCase().indexOf(identifier.toLowerCase()) != -1)
+					result = loker.member;
+				else if (loker.member.user.username.toLowerCase().indexOf(identifier.toLowerCase()) != -1)
+					result = loker.member;
+			} else {
+				if (loker.member.nickname == identifier)
+					result = loker.member;
+				else if (loker.member.user.username == identifier)
+					result = loker.member;
 			}
 		})
 
 		return result;
+
+	}
+
+	public queryGuild(identifier: string, strict=false): Guild | null {
+
+		let result: Guild | null = null;
+
+		this.guildMap.forEach((lokerMap, guild, c) => {
+			if (!strict) {
+				if (guild.name.toLowerCase().indexOf(identifier.toLowerCase()) != -1)
+					result = guild;
+			} else {
+				if (guild.name == identifier)
+					result = guild;
+			}
+		})
+
+		return result;
+
 	}
 
 	/**
