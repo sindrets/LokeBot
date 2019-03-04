@@ -1,23 +1,33 @@
 import LokeBot from "./LokeBot";
 import moment from "moment";
 import config from "./config.json";
-import { User } from "discord.js";
+import { User, Guild, GuildMember } from "discord.js";
+import { GuildMap } from "./Interfaces";
 
 export function initBehaviour(bot: LokeBot): void {
 
 	// -- INIT SCHEDULES --
-	//		set all users' loke status to true, and remove Loker role every morning.
+	// set all users' loke status to true, and remove Loker role every 
+	// morning.
 	bot.scheduleJobUtc("Reset Loke-Status", { hour: parseInt(config.periodStart), minute: 0, second: 0 }, config.utcTimezone, () => {
 		
 		console.log("Resetting Loke roles...");
-		bot.mapLokere(loker => {
+		bot.iterateLokere(loker => {
+
 			loker.status = true;
-			// TODO: ensure that the Loke role exists in the guild.
-			let r = bot.getLokerRole(loker.member.guild);
-			if (r) loker.member.removeRole(r);
+
+			bot.getMemberships(loker.user).forEach(member => {
+
+				bot.getLokerRole(member.guild).then(role => {
+					member.removeRole(role);
+				})
+
+			})
 		});
 	});
-	//		all users who are still marked as Loker at periodEnd, gets the Loker role.
+
+	// all users who are still marked as Loker at periodEnd, gets the 
+	// Loker role.
 	bot.scheduleJobUtc("Prosecute Lokere", { hour: parseInt(config.periodEnd), minute: 0, second: 0 }, config.utcTimezone, () => {
 		
 		// ignore saturdays and sundays.
@@ -26,32 +36,45 @@ export function initBehaviour(bot: LokeBot): void {
 			bot.logNextInvocations();
 			return;
 		}
-		
+
 		console.log("Prosecuting lokere...");
-		bot.mapLokere(loker => {
-			if (loker.status) {
-				let r = bot.getLokerRole(loker.member.guild);
-				if (r) loker.member.addRole(r);
-			}
+
+		// map out all guilty users from each guild and add Loker role 
+		// on all the users' guilds. Register day in database.
+		let guiltyMap: Map<Guild, GuildMember[]> = new Map<Guild, GuildMember[]>();
+
+		bot.iterateLokere(loker => {
+			
+			bot.getMemberships(loker.user).forEach(member => {
+				let memberList = guiltyMap.get(member.guild);
+				if (!memberList) {
+					guiltyMap.set(member.guild, []);
+					memberList = guiltyMap.get(member.guild);
+				}
+				if (loker.status && memberList) {
+					memberList.push(member);
+
+					// Add Loker role
+					bot.getLokerRole(member.guild).then(role => {
+						member.addRole(role);
+					})
+					// Register a new loke-day in the database
+					bot.dbRemote.addLokeDay(member.user.tag);
+				}
+
+			})
+
 		});
 
-		bot.guildMap.forEach((memberMap, guild, guildCollection) => {
-			let lokerList: User[] = [];
-			memberMap.forEach((loker, memberId, memberCollection) => {
-				if (loker.status) {
-					let r = bot.getLokerRole(loker.member.guild);
-					if (r) loker.member.addRole(r);
-					lokerList.push(loker.member.user);
-					bot.dbRemote.addLokeDay(loker.member.user.tag);
-				}
-			});
+		// Iterate over all guilds, and announce lokere
+		guiltyMap.forEach((memberList, guild, c) => {
 
 			let channel = LokeBot.getBotChannel(guild);
 			if (channel) {
-				if (lokerList.length > 0) {
+				if (memberList.length > 0) {
 					channel.send("⚠ DAGENS LOKERE ER DØMT! ⚠");
 					let s = "";
-					lokerList.forEach(user => {
+					memberList.forEach(user => {
 						s += `${user} `;
 					});
 					channel.send(s);
@@ -60,7 +83,9 @@ export function initBehaviour(bot: LokeBot): void {
 				}
 			}
 		})
+
 		bot.logNextInvocations();
+
 	});
 
 	bot.client.on("message", msg => {

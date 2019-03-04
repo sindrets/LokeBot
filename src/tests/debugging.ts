@@ -23,7 +23,7 @@ EventHandler.on(BotEvent.BOT_READY, () => {
     // 	console.log("Current time UTC offset -1: " + moment().utcOffset(0).toString());
     // });
 
-    bot.prettyPrintMemberDict();
+    bot.ppGuildMap();
 
     bot.client.on('message', msg => {
         if (msg.content === 'ping') {

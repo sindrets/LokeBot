@@ -5,6 +5,7 @@ import LokeBot from "./LokeBot";
 import moment from "moment";
 import stringifyObject from "stringify-object";
 import { manual } from "./Manual";
+import { Loker } from "./Interfaces";
 
 type CmdHandlerDict = { [key: string]: (msg: Message, ...args: any[]) => void };
 
@@ -27,17 +28,23 @@ export class CommandHandler {
 		this.addCommand("stats", (msg, args) => {
 
 			let tag = msg.author.tag;
-			let target: GuildMember | null;
+			let name = msg.author.username;
+			let target: Loker | GuildMember | null;
 
 			// @param arg[0] user query.
 			if (args[0] != undefined) {
-				target = this.parent.queryUser(args[0]);
-				if (target) tag = target.user.tag;
+				target = this.parent.queryUsers(args[0], msg.guild);
+				if (target) {
+					tag = target.user.tag;
+					if (target instanceof GuildMember) name = target.displayName;
+					// @ts-ignore 
+					else name = target.user.username;
+				}
 			}
 
 			this.parent.dbRemote.getOneLokerStats(tag, doc => {
 				if (doc && doc.meanderDays.length > 0) {
-					let s = (target) ? target.displayName + "'s" : "Antall";
+					let s = (target) ? name + "'s" : "Antall";
 					s += ` registrerte lokedager: ${doc.meanderDays.length}`;
 					doc.meanderDays.forEach((date, index, c) => {
 						let t = moment(date).utc().utcOffset(config.utcTimezone);
@@ -45,7 +52,7 @@ export class CommandHandler {
 					})
 					msg.reply(s);
 				} else {
-					let s = (target) ? target.displayName : "Du";
+					let s = (target) ? name : "Du";
 					msg.reply(s + " har ingen registrerte lokedager!");
 				}
 			})
