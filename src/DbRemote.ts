@@ -43,17 +43,35 @@ export class DbRemote {
 		}
 	}
 
-	public getOneLokerStats(userTag: string, callback?: (doc: LokerStatDoc | null) => void): void {
+	public getOneLokerStats(userTag: string, callback?: (doc: LokerStatDoc | null) => void, sortDates=false): void {
 		if (this.lokeStats) {
 			this.lokeStats.findOne({ user: userTag }, (err, doc) => {
+				if (doc && sortDates) {
+					// sort dates descending
+					(doc.meanderDays as Date[]).sort((a,b) => {
+						if (a < b) return 1;
+						if (a > b) return -1;
+						return 0;
+					})
+				}
 				if (callback) callback(doc);
 			});
 		}
 	}
 
-	public getAllLokerStats(callback?: (doc: LokerStatDoc[] | null) => void): void {
+	public getAllLokerStats(callback?: (doc: LokerStatDoc[] | null) => void, sortDates=false): void {
 		if (this.lokeStats) {
-			this.lokeStats.find({}).toArray((err, doc) => {
+			this.lokeStats.find().toArray((err, doc) => {
+				if (doc && sortDates) {
+					doc.forEach(obj => {
+						// sort dates descending
+						(obj.meanderDays as Date[]).sort((a,b) => {
+							if (a < b) return 1;
+							if (a > b) return -1;
+							return 0;
+						})
+					})
+				}
 				if (callback) callback(doc);
 			});
 		}

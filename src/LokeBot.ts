@@ -154,6 +154,32 @@ export default class LokeBot {
 	}
 
 	/**
+	 * Pretty print a list of users or guild members. 
+	 * @param list 
+	 * @param log log output to the console
+	 */
+	public ppUserList(list: User[] | GuildMember[], log=false): string {
+
+		let temp: any[] = [];
+
+		if (list[0] instanceof GuildMember) {
+			(list as GuildMember[]).forEach(member => {
+				temp.push(member.user.tag);
+			})
+		} else {
+			(list as User[]).forEach(user => {
+				temp.push(user.tag);
+			})
+		}
+
+		let s = JSON.stringify(temp, undefined, 2);
+		if (log) console.log(s);
+		
+		return s;
+		
+	}
+
+	/**
 	 * Iterate over all Lokere from all guilds. 
 	 * @param callback If the callback returns `true`, the remaining iterations are skipped.
 	 */

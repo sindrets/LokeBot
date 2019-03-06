@@ -14,6 +14,7 @@ export const manual: Manual = {
  * instead.
  * @param userQuery?: <String> Can be a substring of a username, or
  * 		display name. The query is case insensitive.
+ * @flag --all Show all stats.
  * @example ${config.prefix}stats greg
  */`,
 

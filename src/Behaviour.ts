@@ -81,7 +81,7 @@ export function initBehaviour(bot: LokeBot): void {
 						s += `${user} `;
 					});
 					channel.send(s);
-					console.log(memberList);
+					bot.ppUserList(memberList, true);
 				} else {
 					channel.send("Ingen lokere i dag! 🤔");
 				}
