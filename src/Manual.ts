@@ -33,6 +33,12 @@ export const manual: Manual = {
  * tags are provided; the bot will fetch any random post.
  * @param tags?: <String> A list of tags.
  * @example ${config.prefix}iamtrash brown_hair hat
+ */`,
+
+	"rules":
+`rules
+/**
+ * Lists all server and guild rules.
  */`
 
 }

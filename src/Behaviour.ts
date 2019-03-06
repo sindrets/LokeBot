@@ -1,8 +1,11 @@
 import LokeBot from "./LokeBot";
 import moment from "moment";
 import config from "./config.json";
-import { User, Guild, GuildMember } from "discord.js";
-import { GuildMap } from "./Interfaces";
+import { Guild, GuildMember, Message, TextChannel } from "discord.js";
+import { Rules } from "./Rules";
+
+const CACHE_SIZE: number = 100;
+var mockMsgCache: Map<string, Message> = new Map();
 
 export function initBehaviour(bot: LokeBot): void {
 
@@ -120,15 +123,46 @@ export function initBehaviour(bot: LokeBot): void {
 		
 		// mOckIfY meSsAGe
 		if (reaction.emoji.toString() == "🐔" && reaction.message.content.length > 0) {
-			let s = reaction.message.content.split("");
-			let result = "";
-			while (s.length > 0) {
-				let f = ~~(Math.random() * 2);
-				if (f == 0)
-					result += (s.shift() as string).toLowerCase();
-				else result += (s.shift() as string).toUpperCase();
+
+			let cached = mockMsgCache.get(reaction.message.id);
+
+			if (cached === undefined) {
+
+				// §2 violation: tried to mock LokeBot
+				if (reaction.message.author.id == bot.client.user.id) {
+					let channel = undefined;
+					if (reaction.message.guild) {
+						channel = reaction.message.channel as TextChannel;
+					}
+					bot.ruleEnforcer.prosecuteViolator(user, Rules["§2"], channel);
+					return;
+				}
+
+				let s = reaction.message.content.split("");
+				let result = "";
+				while (s.length > 0) {
+					let f = ~~(Math.random() * 2);
+					if (f == 0)
+						result += (s.shift() as string).toLowerCase();
+					else result += (s.shift() as string).toUpperCase();
+				}
+				reaction.message.reply(result);
+				
+			} else {
+				// §1 violation: tried to mock mockified message
+				let channel = undefined;
+				if (reaction.message.guild) {
+					channel = reaction.message.channel as TextChannel;
+				}
+				bot.ruleEnforcer.prosecuteViolator(user, Rules["§1"], channel);
+				return;
 			}
-			reaction.message.reply(result);
+
+			mockMsgCache.set(reaction.message.id, reaction.message);
+			// If cache is full: delete oldest entry
+			if (mockMsgCache.size > CACHE_SIZE) {
+				mockMsgCache.delete(mockMsgCache.keys().next().value);
+			}
 		}
 		
 	});

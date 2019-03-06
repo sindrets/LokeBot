@@ -7,6 +7,8 @@ import stringifyObject from "stringify-object";
 import { manual } from "./Manual";
 import { Loker, GelbooruResponseBody } from "./Interfaces";
 import { TrashConveyor } from "./TrashConveyor";
+import { Rules } from "./Rules";
+import { Utils } from "./Utils";
 
 type CmdHandlerDict = { [key: string]: (msg: Message, ...args: any[]) => void };
 
@@ -118,6 +120,20 @@ export class CommandHandler {
 				}
 			})
 			
+		});
+
+		this.addCommand("rules", (msg, args) => {
+
+			let s = " ⚖ 𝗟𝗢𝗞𝗘-𝗟𝗢𝗩 ⚖ "
+				+ "\nI henhold til Loke-Lov så er alle brudd på loke-paragrafene "
+				+ "\nstraffbare. Ulike brudd kan ha ulike konsekvenser avhengig av bruddets "
+				+ "\nalvorlighetsgrad."
+			Utils.objForEach(Rules, (rule, article) => {
+				s += `\n\n${article}: ${rule}`;
+			});
+
+			msg.reply(s);
+
 		});
 		
 	}

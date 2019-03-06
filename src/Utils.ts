@@ -90,5 +90,27 @@ export class Utils {
 	public static cutString(text: string, start: number, end: number): string {
 		return text.substr(0, start) + text.substr(end);
 	}
+
+	public static getObjKey(enumerator: any, value: any): any {
+
+		let result = null;
+		Object.keys(enumerator).some(key => {
+			let stop = false;
+			if (enumerator[key] === value) {
+				result = key;
+				stop = true;
+			}
+			return stop;
+		})
+
+		return result;
+		
+	}
+
+	public static objForEach(enumerator: any, callback: (value: any, key: any, obj: any) => void): void {
+		Object.keys(enumerator).forEach(key => {
+			callback(enumerator[key], key, enumerator);
+		});
+	}
     
 }

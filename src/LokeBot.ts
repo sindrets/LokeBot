@@ -9,6 +9,7 @@ import { DbRemote } from "./DbRemote";
 import { EventHandler } from "./EventHandler";
 import { GuildMap, Loker, UserMap } from "./Interfaces";
 import { initBehaviour } from "./Behaviour";
+import { RuleEnforcer } from "./RuleEnforcer";
 
 export default class LokeBot {
 
@@ -19,12 +20,14 @@ export default class LokeBot {
 	public client: Client;
 	public dbRemote: DbRemote;
 	public commandHandler: CommandHandler;
+	public ruleEnforcer: RuleEnforcer;
 
 	constructor() {
 
 		this.client = new Client();
 		this.dbRemote = new DbRemote();
 		this.commandHandler = new CommandHandler(this);
+		this.ruleEnforcer = new RuleEnforcer();
 
 		process.on("SIGINT", () => { this.shutdown() });
 		process.on("SIGABRT", () => { this.shutdown() });
