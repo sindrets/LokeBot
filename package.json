@@ -1,6 +1,6 @@
 {
   "name": "loke-bot",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "",
   "main": "out/Main.js",
   "scripts": {
@@ -19,6 +19,7 @@
   "homepage": "https://github.com/sindrets/LokeBot#readme",
   "dependencies": {
     "discord.js": "^11.4.2",
+    "got": "^9.6.0",
     "long": "^4.0.0",
     "moment": "^2.24.0",
     "mongodb": "^3.1.13",
@@ -27,10 +28,12 @@
     "stringify-object": "^3.3.0"
   },
   "devDependencies": {
+    "@types/got": "^9.4.1",
     "@types/long": "^4.0.0",
     "@types/mongodb": "^3.1.19",
     "@types/node": "^11.9.4",
     "@types/node-schedule": "^1.2.3",
+    "@types/request": "^2.48.1",
     "@types/sprintf-js": "^1.1.2",
     "@types/stringify-object": "^3.2.0"
   }

@@ -24,6 +24,15 @@ export const manual: Manual = {
  * bot will display help for that command.
  * @param command?: <String> A command to look up in the manual.
  * @example ${config.prefix}help stats
+ */`,
+
+	"iamtrash":
+`iamtrash [...tags]
+/**
+ * Retrieves a random post from Gelbooru with the provided tags. If no
+ * tags are provided; the bot will fetch any random post.
+ * @param tags?: <String> A list of tags.
+ * @example ${config.prefix}iamtrash brown_hair hat
  */`
 
 }

@@ -101,7 +101,7 @@ export default class LokeBot {
 	/**
 	 * Pretty print the guild map.
 	 */
-	public ppGuildMap(): string {
+	public ppGuildMap(log=false): string {
 
 		let dict: { [key: string]: string[] } = {};
 
@@ -115,7 +115,7 @@ export default class LokeBot {
 		});
 
 		let s = JSON.stringify(dict, undefined, 2);
-		console.log(s);
+		if (log) console.log(s);
 
 		return s;
 
@@ -124,7 +124,7 @@ export default class LokeBot {
 	/**
 	 * Pretty print the user map.
 	 */
-	public ppUserMap(): string {
+	public ppUserMap(log=false): string {
 
 		let dict: { 
 			[key: string]: {
@@ -144,7 +144,7 @@ export default class LokeBot {
 		});
 
 		let s = JSON.stringify(dict, undefined, 2);
-		console.log(s);
+		if (log) console.log(s);
 
 		return s;
 		
@@ -192,6 +192,22 @@ export default class LokeBot {
 		this.iterateLokere(loker => {
 			loker.status = flag;
 		});
+
+	}
+
+	/**
+	 * Override loke status of specific users.
+	 * @param conf An object with user queries as keys, and booleans as values
+	 * @param strict Whether or not the query should be strict 
+	 * @see LokeBot.queryUsers for details on how user queries work.
+	 */
+	public overrideStatus(conf: {[key:string]: boolean}, strict=false): void {
+
+		let entries = Object.entries(conf);
+		entries.forEach(pair => {
+			let loker = this.queryUsers(pair[0], strict);
+			if (loker) loker.status = pair[1];
+		})
 
 	}
 

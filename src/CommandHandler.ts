@@ -5,7 +5,8 @@ import LokeBot from "./LokeBot";
 import moment from "moment";
 import stringifyObject from "stringify-object";
 import { manual } from "./Manual";
-import { Loker } from "./Interfaces";
+import { Loker, GelbooruResponseBody } from "./Interfaces";
+import { TrashConveyor } from "./TrashConveyor";
 
 type CmdHandlerDict = { [key: string]: (msg: Message, ...args: any[]) => void };
 
@@ -100,11 +101,23 @@ export class CommandHandler {
 				} catch (e) {
 					result = (e as Error).message + "\n\n" + (e as Error).stack;
 				}
-				console.log("EVAL OUPUT for: " + arg);
-				console.log(result);
+				console.log(`${msg.author.tag} RAN THE EVAL COMMAND ON THE FOLLOWING STRING: ${arg}`);
 				msg.author.send("```\n" + result + "\n```");
 			}
 
+		});
+
+		this.addCommand("iamtrash", (msg, args) => {
+
+			let response: GelbooruResponseBody | null = null;
+			TrashConveyor.getRandomPost(args).then(resp => {
+				response = resp;
+
+				if (response) {
+					msg.reply(response.file_url);
+				}
+			})
+			
 		});
 		
 	}
