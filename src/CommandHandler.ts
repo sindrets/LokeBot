@@ -167,10 +167,10 @@ export class CommandHandler {
 
 		this.addCommand("owo", (msg, flags, args) => {
 
+			this.bot.userSay(msg.author, owofy(args.join(" ")), {}, msg.channel);
 			if (msg.deletable) {
 				msg.delete();
 			}
-			this.bot.userSay(msg.author, owofy(args.join(" ")));
 			
 		})
 		
