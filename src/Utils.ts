@@ -1,7 +1,7 @@
 
 export class Utils {
 
-    private static uidCounter: number = 0;
+	private static uidCounter: number = 0;
 
 	/**
 	 * Returns a new Unique ID.
@@ -23,11 +23,15 @@ export class Utils {
 	/** Return the difference between two values */
 	public static dif(a: number, b: number): number {
 		return Math.abs(a - b);
-    }
-    
-    /** Return the value if it belongs between the given range. Otherwise
+	}
+	
+	/** Return the value if it belongs between the given range. Otherwise
 	return the closest of the extremes. */
 	public static clamp(value: number, min: number, max: number): number {
+		if (max < min) {
+			console.warn("Clamp was called with a max value less than the min value!")
+			max = min;
+		}
 		if (value < min) return min;
 		if (value > max) return max;
 		return value;
@@ -42,15 +46,15 @@ export class Utils {
 	/** Returns true if both numbers have the same sign */
 	public static sameSign(a: number, b: number): boolean {
 		return (a * b) >= 0;
-    }
-    
-    /** Linearly interpolate between a and b.
+	}
+	
+	/** Linearly interpolate between a and b.
 	 * Weight t should be in the range [0.0, 1.0] */
 	public static lerp(a: number, b: number, t: number): number {
 		return (1.0 - t) * a + t * b;
-    }
-    
-    /** Splice and return the first element from an array. */
+	}
+	
+	/** Splice and return the first element from an array. */
 	public static spliceFirst(array: Array<any>): any {
 		return array.splice(0, 1)[0];
 	}
@@ -112,5 +116,5 @@ export class Utils {
 			callback(enumerator[key], key, enumerator);
 		});
 	}
-    
+	
 }

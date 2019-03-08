@@ -1,9 +1,9 @@
-import { Command } from "./Constants";
 import config from "./config.json";
 import { Message, GuildMember } from "discord.js";
 import LokeBot from "./LokeBot";
 import moment from "moment";
 import stringifyObject from "stringify-object";
+import owofy from "owofy";
 import { manual } from "./Manual";
 import { Loker, GelbooruResponseBody } from "./Interfaces";
 import { TrashConveyor } from "./TrashConveyor";
@@ -14,11 +14,11 @@ type CmdHandlerDict = { [key: string]: (msg: Message, flags: Map<string,string>,
 
 export class CommandHandler {
 
-	private parent: LokeBot;
+	private bot: LokeBot;
 	private handlers: CmdHandlerDict = {};
 
 	constructor(parent: LokeBot) {
-		this.parent = parent;
+		this.bot = parent;
 		this.initCommands();
 	}
 
@@ -37,7 +37,7 @@ export class CommandHandler {
 
 			// @param arg[0] user query.
 			if (args[0] != undefined) {
-				target = this.parent.queryUsers(args[0], msg.guild);
+				target = this.bot.queryUsers(args[0], msg.guild);
 				if (target) {
 					tag = target.user.tag;
 					if (target instanceof GuildMember) name = target.displayName;
@@ -46,7 +46,7 @@ export class CommandHandler {
 				}
 			}
 
-			this.parent.dbRemote.getOneLokerStats(tag, doc => {
+			this.bot.dbRemote.getOneLokerStats(tag, doc => {
 
 				if (doc && all) {
 					let s = (target) ? name + "'s" : "Din";
@@ -120,10 +120,10 @@ export class CommandHandler {
 		 */
 		this.addCommand("eval", (msg, flags, args) => {
 
-			if (msg.guild != null || !this.parent.isDevAdmin(msg.author.id)) return;
+			if (msg.guild != null || !this.bot.isDevAdmin(msg.author.id)) return;
 
 			if (args) {
-				let bot = this.parent; // for use in eval
+				let bot = this.bot; // for use in eval
 				let stringify = stringifyObject; // for use in eval
 				let arg = (args as string[]).join(" ");
 				let result = "";
@@ -164,6 +164,15 @@ export class CommandHandler {
 			msg.reply(s);
 
 		});
+
+		this.addCommand("owo", (msg, flags, args) => {
+
+			if (msg.deletable) {
+				msg.delete();
+			}
+			this.bot.userSay(msg.author, owofy(args.join(" ")));
+			
+		})
 		
 	}
 
@@ -179,7 +188,7 @@ export class CommandHandler {
 		this.handlers[cmd] = listener;
 	}
 
-	public runCommand(cmd: string | Command, msg: Message, flags: Map<string,string>, ...args: any[]): void {
+	public runCommand(cmd: string, msg: Message, flags: Map<string,string>, ...args: any[]): void {
 		if (!this.handlers[cmd]) return;
 		this.handlers[cmd](msg, flags, args);
 	}

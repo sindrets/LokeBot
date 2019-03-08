@@ -57,7 +57,7 @@ export class TrashConveyor {
 		
 		let result = null;
 		if (response) {
-			result = response[Utils.clamp(index, 0, response.length)];
+			result = response[Utils.clamp(index, 0, response.length-1)];
 		}
 
 		return result;

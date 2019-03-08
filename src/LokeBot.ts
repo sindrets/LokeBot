@@ -1,4 +1,4 @@
-import { Client, TextChannel, Guild, GuildChannel, GuildMember, Role, User } from "discord.js";
+import { Client, TextChannel, Guild, GuildChannel, GuildMember, Role, User, StringResolvable, MessageOptions, RichEmbed, Attachment, DMChannel, GroupDMChannel } from "discord.js";
 import { BotEvent } from "./Constants";
 import moment from "moment";
 import schedule, { Job } from "node-schedule";
@@ -270,6 +270,39 @@ export default class LokeBot {
 		}
 		return role;
 
+	}
+
+	/**
+	 * Find and return the "Rutta-gutta" role in the provided guild. Create it if it's not found.
+	 * @param guild 
+	 */
+	public async getRuttaRole(guild: Guild): Promise<Role> {
+
+		let role = guild.roles.find(role => role.name == "Rutta-gutta");
+		
+		if (role === null) {
+			await guild.createRole({ name: "Rutta-gutta", color: "LUMINOUS_VIVID_PINK" }).then(r => {
+				role = r;
+			});
+		}
+		return role;
+
+	}
+
+	/**
+	 * Say message in place of another user. 
+	 * @param user 
+	 * @param content 
+	 * @param options 
+	 * @param channel 
+	 */
+	public userSay(user: User, content?: StringResolvable, options?: MessageOptions | RichEmbed | Attachment, channel?: TextChannel | DMChannel | GroupDMChannel): void {
+
+		let s = `${user} 𝘀𝗮𝘆𝘀: ${content}`;
+
+		if (channel) channel.send(s, options);
+		else user.send(s, options);
+		
 	}
 
 	/**

@@ -40,6 +40,14 @@ export const manual: Manual = {
 `rules
 /**
  * Lists all server and guild rules.
+ */`,
+
+	"owo":
+`owo message
+/**
+ * Owoify a string.
+ * @param message: <String> The string to owoify.
+ * @example ${config.prefix}owo *notices buldge* !!
  */`
 
 }

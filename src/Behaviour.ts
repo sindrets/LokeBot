@@ -139,14 +139,14 @@ export function initBehaviour(bot: LokeBot): void {
 				}
 
 				let s = reaction.message.content.split("");
-				let result = "";
+				let result = `${reaction.message.author} `;
 				while (s.length > 0) {
 					let f = ~~(Math.random() * 2);
 					if (f == 0)
 						result += (s.shift() as string).toLowerCase();
 					else result += (s.shift() as string).toUpperCase();
 				}
-				reaction.message.reply(result);
+				bot.userSay(user, result, {}, reaction.message.channel);
 				
 			} else {
 				// §1 violation: tried to mock mockified message
