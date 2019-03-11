@@ -24,6 +24,8 @@ export const manual: Manual = {
  * Displays this help text. If the command parameter is provided, the
  * bot will display help for that command.
  * @param command?: <String> A command to look up in the manual.
+ * @flag --here Send the help to the current channel as opposed to
+ * 		sending it as a DM.
  * @example ${config.prefix}help stats
  */`,
 

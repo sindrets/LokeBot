@@ -9,8 +9,9 @@ import { Loker, GelbooruResponseBody } from "./Interfaces";
 import { TrashConveyor } from "./TrashConveyor";
 import { Rules } from "./Rules";
 import { Utils } from "./Utils";
+import { FlagParser } from "./FlagParser.js";
 
-type CmdHandlerDict = { [key: string]: (msg: Message, flags: Map<string,string>, ...args: any[]) => void };
+type CmdHandlerDict = { [key: string]: (msg: Message, flags: FlagParser, ...args: any[]) => void };
 
 export class CommandHandler {
 
@@ -27,13 +28,13 @@ export class CommandHandler {
 		/**
 		 * if additional arg is supplied: query stats for that user.
 		 * @param args[0] user query 
+		 * @flag all
 		 */
 		this.addCommand("stats", (msg, flags, args) => {
 
 			let tag = msg.author.tag;
 			let name = msg.author.username;
 			let target: Loker | GuildMember | null;
-			let all = flags.get("all") != undefined ? true : false;
 
 			// @param arg[0] user query.
 			if (args[0] != undefined) {
@@ -48,7 +49,7 @@ export class CommandHandler {
 
 			this.bot.dbRemote.getOneLokerStats(tag, doc => {
 
-				if (doc && all) {
+				if (doc && flags.isTrue("all")) {
 					let s = (target) ? name + "'s" : "Din";
 					s += ` fullstendige loke-statistikk.`;
 					s += "\n```";
@@ -65,22 +66,26 @@ export class CommandHandler {
 				else if (doc && doc.meanderDays.length > 5) {
 					let s = (target) ? name + "'s" : "Antall";
 					s += ` registrerte lokedager: ${doc.meanderDays.length}`;
-					s += "\n Siste 5 registrerte loke-dager:"
+					s += "\n Siste 5 registrerte loke-dager:";
+					s += "\n```";
 					doc.meanderDays.some((date, index) => {
 						let t = moment(date).utc().utcOffset(config.utcTimezone);
 						s += "\n" + t.toString();
 						return index >= 4;
 					})
-					s += "\n\n For fullstendig statistikk; benytt flagget `--all`.";
+					s += "\n```";
+					s += "For fullstendig statistikk; benytt flagget `--all`.";
 					msg.reply(s);
 				}
 				else if (doc && doc.meanderDays.length > 0) {
 					let s = (target) ? name + "'s" : "Antall";
 					s += ` registrerte lokedager: ${doc.meanderDays.length}`;
+					s += "\n```";
 					doc.meanderDays.forEach((date, index, c) => {
 						let t = moment(date).utc().utcOffset(config.utcTimezone);
 						s += "\n" + t.toString();
 					})
+					s += "\n```";
 					msg.reply(s);
 				} else {
 					let s = (target) ? name : "Du";
@@ -91,6 +96,9 @@ export class CommandHandler {
 
 		});
 
+		/**
+		 * @flag here
+		 */
 		this.addCommand("help", (msg, flags, args) => {
 
 			let s: string[] = [""];
@@ -108,7 +116,19 @@ export class CommandHandler {
 				}
 			}
 
-			if (msg.guild) msg.reply("Manual oppslag ble sendt som DM.");
+			// if the "here" flag is provided: send help to current
+			// channel.
+			let sendHere = flags.isTrue("here");
+			if (sendHere && msg.guild) {
+				s.forEach((helpString, i, c) => {
+					msg.channel.send("```java\n" + helpString + "\n```");
+				});
+				return;
+			}
+			else if (msg.guild) {
+				msg.reply("Manual oppslag ble sendt som DM.");
+			}
+
 			s.forEach((helpString, i, c) => {
 				msg.author.send("```java\n" + helpString + "\n```");
 			})
@@ -176,7 +196,7 @@ export class CommandHandler {
 		
 	}
 
-	public addCommand(cmd: string, listener: (msg: Message, flags: Map<string,string>, ...args: any[]) => void): void {
+	public addCommand(cmd: string, listener: (msg: Message, flags: FlagParser, ...args: any[]) => void): void {
 		if (this.handlers[cmd] != undefined) {
 			console.error(`That command has already been added: ${cmd}`);
 			return;
@@ -184,11 +204,11 @@ export class CommandHandler {
 		this.handlers[cmd] = listener;
 	}
 
-	public forceAddCommand(cmd: string, listener: (msg: Message, flags: Map<string,string>, ...args: any[]) => void): void {
+	public forceAddCommand(cmd: string, listener: (msg: Message, flags: FlagParser, ...args: any[]) => void): void {
 		this.handlers[cmd] = listener;
 	}
 
-	public runCommand(cmd: string, msg: Message, flags: Map<string,string>, ...args: any[]): void {
+	public runCommand(cmd: string, msg: Message, flags: FlagParser, ...args: any[]): void {
 		if (!this.handlers[cmd]) return;
 		this.handlers[cmd](msg, flags, args);
 	}
@@ -199,44 +219,14 @@ export class CommandHandler {
 		// ensure that command starts with prefix
 		if (content.substring(0, config.prefix.length) != config.prefix) return;
 
-		let args = content.substr(config.prefix.length).trim().replace(/ +(?= )/g, "").split(" "); // trim and remove all multiple spaces
+		let args = content.substr(config.prefix.length).match(/(?!\s)([^"'\s]*)(=?(["'])(?:(?=(\\?))\4.)*?\3)?/g) || [""];
+		if (args.length > 1) args.pop(); // remove empty string from regex match
 		let cmd = args.splice(0,1)[0];
-		let flags = CommandHandler.parseFlags(args);
+		let flags = FlagParser.parseFlags(args);
+		// console.log("cmd: " + cmd);
+		// console.log(flags);
+		// console.log(args);
 		this.runCommand(cmd, msg, flags, ...args);
 	}
-
-	public static parseFlags(args: string[]): Map<string, string> {
-
-        let result: Map<string, string> = new Map();
-        let offset = 0;
-        
-        args.slice(0).forEach((arg, index) => {
-
-            if (arg.substr(0, 2) == "--") {
-                let value: string = "";
-                let tmp = arg.match(/\=(["'])(?:(?=(\\?))\2.)*?\1/);
-                if (tmp) value = tmp[0].substring(2, tmp[0].length-1);
-                else value = "true";
-                result.set(arg.substring(2), value);
-
-                args.splice(index - offset, 1);
-                offset++;
-            }
-            else if (arg.substr(0,1) == "-") {
-                let flags = arg.split("");
-                flags.shift();
-                flags.forEach(flag => {
-                    result.set(flag, "true");
-                })
-
-                args.splice(index - offset, 1);
-                offset++;
-            }
-            
-        })
-
-        return result;
-        
-    }
 	
 }

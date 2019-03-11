@@ -9,7 +9,7 @@ const dbName: string = auth.DB_NAME;
 
 MongoClient.connect(uri, (error, dbClient) => {
 	assert.strictEqual(error, null);
-	console.log("Connected successfully to server!");
+	console.log("Successfully connected to database!");
 
 	const db = dbClient.db(dbName);
 

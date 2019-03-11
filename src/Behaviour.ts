@@ -3,6 +3,7 @@ import moment from "moment";
 import config from "./config.json";
 import { Guild, GuildMember, Message, TextChannel } from "discord.js";
 import { Rules } from "./Rules";
+import { sprintf } from "sprintf-js";
 
 const CACHE_SIZE: number = 100;
 var mockMsgCache: Map<string, Message> = new Map();
@@ -10,8 +11,8 @@ var mockMsgCache: Map<string, Message> = new Map();
 export function initBehaviour(bot: LokeBot): void {
 
 	// -- INIT SCHEDULES --
-	// set all users' loke status to true, and remove Loker role every 
-	// morning.
+	// set all users' loke status to true, and remove "Loker" /
+	// "Rutta-gutta" role every morning.
 	bot.scheduleJobUtc("Reset Loke-Status", { hour: parseInt(config.periodStart), minute: 0, second: 0 }, config.utcTimezone, () => {
 		
 		console.log("Resetting Loke roles...");
@@ -22,6 +23,9 @@ export function initBehaviour(bot: LokeBot): void {
 			bot.getMemberships(loker.user).forEach(member => {
 
 				bot.getLokerRole(member.guild).then(role => {
+					member.removeRole(role);
+				})
+				bot.getRuttaRole(member.guild).then(role => {
 					member.removeRole(role);
 				})
 
@@ -96,13 +100,30 @@ export function initBehaviour(bot: LokeBot): void {
 
 		bot.commandHandler.parseCommand(msg);
 		
-		// if a user sends a message during the judgement period; unmark them as Loker.
-		let format: string = "hh:mm";
-		let t = moment().utc().utcOffset(config.utcTimezone * 60);
-		let active: boolean = t.isBetween(moment(config.periodStart, format), moment(config.periodEnd, format));
-		if (active) {
-			let loker = bot.getLokerById(msg.author.id);
-			if (loker) loker.status = false;
+		// if a user sends a message during the judgement period; unmark
+		// them as Loker and add "Rutta-gutta" role.
+		let loker = bot.getLokerById(msg.author.id);
+		if (msg.guild && loker && loker.status) {
+			let format: string = "hh:mm";
+			let t = moment().utc().utcOffset(config.utcTimezone * 60);
+			let active: boolean = t.isBetween(moment(config.periodStart, format), moment(config.periodEnd, format));
+			if (active) {
+				loker.status = false;
+				bot.getRuttaRole(msg.guild).then(role => {
+
+					msg.member.addRole(role);
+
+					let sList: string[] = [
+						"Sjekk hvem som er rutta! Det er %s!",
+						"Hvem loker? Hvertfall ikke %s!",
+						"Hva faaaen a? Sjekk %s er rutta!"
+					];
+					let i = ~~(Math.random() * sList.length);
+
+					msg.channel.send(sprintf(sList[i], msg.author));
+					
+				});
+			}
 		}
 
 		// you just activated my trap card...

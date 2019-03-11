@@ -25,7 +25,7 @@ export class DbRemote {
 		MongoClient.connect(this.uri, {useNewUrlParser: true}, (err, dbClient) => {
 			assert.strictEqual(err, null);
 			if (err) console.error(err.errmsg);
-			console.log("Successfully connected to the server!");
+			console.log("Successfully connected to the database!");
 
 			this.dbClient = dbClient;
 			this.db = dbClient.db(this.dbName);
