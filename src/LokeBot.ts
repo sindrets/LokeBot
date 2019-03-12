@@ -1,4 +1,4 @@
-import { Client, TextChannel, Guild, GuildChannel, GuildMember, Role, User, StringResolvable, MessageOptions, RichEmbed, Attachment, DMChannel, GroupDMChannel } from "discord.js";
+import { Client, TextChannel, Guild, GuildChannel, GuildMember, Role, User, StringResolvable, MessageOptions, RichEmbed, DMChannel, GroupDMChannel, Attachment } from "discord.js";
 import { BotEvent } from "./Constants";
 import moment from "moment";
 import schedule, { Job } from "node-schedule";
@@ -26,7 +26,7 @@ export default class LokeBot {
 	 * object. 
 	 */
 	public userMap!: UserMap;
-	
+
 	public client: Client;
 	public dbRemote: DbRemote;
 	public commandHandler: CommandHandler;
@@ -60,19 +60,25 @@ export default class LokeBot {
 			
 		});
 
+		// triggered when LokeBot joins a guild
 		this.client.on("guildCreate", guild => {
 			this.addGuild(guild);
 			this.addGuildMembers(guild);
 		});
 
+		// triggered when LokeBot is kicked from a guild
 		this.client.on("guildDelete", guild => {
 			this.removeGuild(guild);
 		});
 
+		// triggered when a member joins a guild where LokeBot is also a
+		// member
 		this.client.on("guildMemberAdd", member => {
 			this.addMember(member);
 		});
 
+		// triggered when a member leaves a guild where LokeBot is also
+		// a member
 		this.client.on("guildMemberRemove", member => {
 			this.removeMember(member);
 		});

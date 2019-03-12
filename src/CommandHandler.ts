@@ -1,5 +1,5 @@
 import config from "./config.json";
-import { Message, GuildMember } from "discord.js";
+import { Message, GuildMember, MessageEmbed, User, Guild } from "discord.js";
 import LokeBot from "./LokeBot";
 import moment from "moment";
 import stringifyObject from "stringify-object";
@@ -33,64 +33,102 @@ export class CommandHandler {
 		this.addCommand("stats", (msg, flags, args) => {
 
 			let tag = msg.author.tag;
-			let name = msg.author.username;
-			let target: Loker | GuildMember | null;
+			let name = msg.member ? msg.member.displayName : msg.author.username;
+			let target: User = msg.author;
+			let guild: Guild | undefined = msg.guild;
+			let now = moment.utc();
 
 			// @param arg[0] user query.
 			if (args[0] != undefined) {
-				target = this.bot.queryUsers(args[0], msg.guild);
-				if (target) {
-					tag = target.user.tag;
-					if (target instanceof GuildMember) name = target.displayName;
-					// @ts-ignore 
-					else name = target.user.username;
+				let member = this.bot.queryUsers(args[0], guild);
+				if (member) {
+					target = member.user;
+					tag = target.tag;
+					if (member instanceof GuildMember)
+						name = member.displayName;
+					else name = target.username;
 				}
 			}
 
-			this.bot.dbRemote.getOneLokerStats(tag, doc => {
+			let embed = {
+				"title": "Registrerte loke-dager:",
+				"color": parseInt("9D05A6", 16),
+				"footer": {
+					"icon_url": "https://cdn.discordapp.com/avatars/546725392090791948/787e9d669a2144424171251ba42e2d9d.png?size=128",
+					"text": "Stats provided by LokeBot"
+				},
+				"thumbnail": {
+					"url": target.avatarURL
+				},
+				"author": {
+					"name": `${name}'s stats`,
+					"icon_url": target.avatarURL
+				},
+				"fields": [
+					{
+						"name": "Denne uken:",
+						"value": "0",
+						"inline": true
+					},
+					{
+						"name": "Denne måneden:",
+						"value": "0",
+						"inline": true
+					},
+					{
+						"name": "Totalt:",
+						"value": "0",
+						"inline": true
+					},
+					{
+						"name": "Siste 5 registrerte loke-dager:",
+						"value": "```\nIngen registrerte loke-dager!```"
+					}
+				]
+			};
 
-				if (doc && flags.isTrue("all")) {
-					let s = (target) ? name + "'s" : "Din";
-					s += ` fullstendige loke-statistikk.`;
-					s += "\n```";
-					s += `\nRegistrerte lokedager: ${doc.meanderDays.length}`;
-					s += "\n["
-					doc.meanderDays.forEach((date, index, c) => {
-						let t = moment(date).utc().utcOffset(config.utcTimezone);
-						s += "\n  " + t.toString();
-					})
-					s += "\n]";
-					s += "\n```";
-					msg.reply(s);
+			this.bot.dbRemote.getStatsSingle(tag, doc => {
+
+				if (doc) {
+
+					let lastMonth = Utils.getDatesInPeriod(doc.meanderDays, "month", now.month() + 1);
+					let lastWeek = Utils.getDatesInPeriod(doc.meanderDays, "week", now.isoWeek());
+
+					embed.fields[0].value = String(lastWeek.length);		// week count
+					embed.fields[1].value = String(lastMonth.length);		// month count
+					embed.fields[2].value = String(doc.meanderDays.length);	// total count
+					
+					if (flags.isTrue("all")) {
+
+						embed.fields[3].name = "Fullstendige loke-statistikk:";
+						let s = "\n```";
+						s += "\n["
+						doc.meanderDays.forEach((date, index, c) => {
+							let t = moment(date).utc().utcOffset(config.utcTimezone);
+							s += "\n  " + t.toString();
+						})
+						s += "\n]";
+						s += "\n```";
+						embed.fields[3].value = s;
+						
+					}
+					else {
+
+						let s = "\n```";
+						doc.meanderDays.some((date, index) => {
+							let t = moment(date).utc().utcOffset(config.utcTimezone);
+							s += "\n" + t.toString();
+							return index >= 4;
+						})
+						s += "\n```";
+						s += "For fullstendig statistikk; benytt flagget `--all`.";
+						embed.fields[3].value = s;
+						
+					}
+					
 				}
-				else if (doc && doc.meanderDays.length > 5) {
-					let s = (target) ? name + "'s" : "Antall";
-					s += ` registrerte lokedager: ${doc.meanderDays.length}`;
-					s += "\n Siste 5 registrerte loke-dager:";
-					s += "\n```";
-					doc.meanderDays.some((date, index) => {
-						let t = moment(date).utc().utcOffset(config.utcTimezone);
-						s += "\n" + t.toString();
-						return index >= 4;
-					})
-					s += "\n```";
-					s += "For fullstendig statistikk; benytt flagget `--all`.";
-					msg.reply(s);
-				}
-				else if (doc && doc.meanderDays.length > 0) {
-					let s = (target) ? name + "'s" : "Antall";
-					s += ` registrerte lokedager: ${doc.meanderDays.length}`;
-					s += "\n```";
-					doc.meanderDays.forEach((date, index, c) => {
-						let t = moment(date).utc().utcOffset(config.utcTimezone);
-						s += "\n" + t.toString();
-					})
-					s += "\n```";
-					msg.reply(s);
-				} else {
-					let s = (target) ? name : "Du";
-					msg.reply(s + " har ingen registrerte lokedager!");
-				}
+
+				msg.reply("", {embed: embed});
 
 			}, true)
 
@@ -132,7 +170,7 @@ export class CommandHandler {
 			s.forEach((helpString, i, c) => {
 				msg.author.send("```java\n" + helpString + "\n```");
 			})
-			
+
 		})
 
 		/**
@@ -168,7 +206,7 @@ export class CommandHandler {
 					msg.reply(response.file_url);
 				}
 			})
-			
+
 		});
 
 		this.addCommand("rules", (msg, flags, args) => {
@@ -191,9 +229,9 @@ export class CommandHandler {
 			if (msg.deletable) {
 				msg.delete();
 			}
-			
+
 		})
-		
+
 	}
 
 	/**
@@ -246,12 +284,12 @@ export class CommandHandler {
 
 		let args = content.substr(config.prefix.length).match(/(?!\s)([^"'\s]*)(=?(["'])(?:(?=(\\?))\4.)*?\3)?/g) || [""];
 		if (args.length > 1) args.pop(); // remove empty string from regex match
-		let cmd = args.splice(0,1)[0];
+		let cmd = args.splice(0, 1)[0];
 		let flags = FlagParser.parseFlags(args);
 		// console.log("cmd: " + cmd);
 		// console.log(flags);
 		// console.log(args);
 		this.runCommand(cmd, msg, flags, ...args);
 	}
-	
+
 }

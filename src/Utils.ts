@@ -1,3 +1,4 @@
+import moment = require("moment");
 
 export class Utils {
 
@@ -115,6 +116,41 @@ export class Utils {
 		Object.keys(enumerator).forEach(key => {
 			callback(enumerator[key], key, enumerator);
 		});
+	}
+
+	public static getDatesInPeriod(dates: Date[], period: "year", isoIndex: number): Date[];
+	public static getDatesInPeriod(dates: Date[], period: "month", isoIndex: number): Date[];
+	public static getDatesInPeriod(dates: Date[], period: "week", isoIndex: number): Date[];
+	public static getDatesInPeriod(dates: Date[], period: string, isoIndex: number): Date[] {
+		
+		let result: Date[] = [];
+
+		dates.forEach(date => {
+			switch (period) {
+	
+				case "week":
+					if (moment(date).isoWeek() == isoIndex) {
+						result.push(date);
+					}
+					break;
+	
+				case "month":
+					if (moment(date).month() + 1 == isoIndex) {
+						result.push(date);
+					}
+					break;
+	
+				case "year":
+					if (moment(date).year() == isoIndex) {
+						result.push(date);
+					}
+					break;
+				
+			}
+		})
+
+		return result;
+		
 	}
 	
 }

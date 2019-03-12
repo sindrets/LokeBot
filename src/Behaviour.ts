@@ -38,8 +38,8 @@ export function initBehaviour(bot: LokeBot): void {
 	bot.scheduleJobUtc("Prosecute Lokere", { hour: parseInt(config.periodEnd), minute: 0, second: 0 }, config.utcTimezone, () => {
 		
 		// ignore saturdays and sundays.
-		let now = moment().utc().weekday();
-		if (now == 0 || now == 6) {
+		let now = moment().utc().isoWeekday();
+		if (now == 6 || now == 7) {
 			bot.logNextInvocations();
 			return;
 		}

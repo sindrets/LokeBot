@@ -5,6 +5,8 @@ import auth from "./auth.json";
 import { EventHandler } from "./EventHandler.js";
 import { BotEvent } from "./Constants.js";
 import { LokerStatDoc } from "./Interfaces.js";
+import moment = require("moment");
+import { Utils } from "./Utils.js";
 
 export class DbRemote {
 
@@ -43,7 +45,7 @@ export class DbRemote {
 		}
 	}
 
-	public getOneLokerStats(userTag: string, callback?: (doc: LokerStatDoc | null) => void, sortDates=false): void {
+	public getStatsSingle(userTag: string, callback?: (doc: LokerStatDoc | null) => void, sortDates=false): void {
 		if (this.lokeStats) {
 			this.lokeStats.findOne({ user: userTag }, (err, doc) => {
 				if (doc && sortDates) {
@@ -59,7 +61,7 @@ export class DbRemote {
 		}
 	}
 
-	public getAllLokerStats(callback?: (doc: LokerStatDoc[] | null) => void, sortDates=false): void {
+	public getStatsAll(callback?: (doc: LokerStatDoc[] | null) => void, sortDates=false): void {
 		if (this.lokeStats) {
 			this.lokeStats.find().toArray((err, doc) => {
 				if (doc && sortDates) {
@@ -77,8 +79,40 @@ export class DbRemote {
 		}
 	}
 
+	public getStatsPeriodSingle(userTag: string, period: "year", isoIndex: number, callback: (doc: LokerStatDoc | null) => void): void;
+	public getStatsPeriodSingle(userTag: string, period: "month", isoIndex: number, callback: (doc: LokerStatDoc | null) => void): void;
+	public getStatsPeriodSingle(userTag: string, period: "week", isoIndex: number, callback: (doc: LokerStatDoc | null) => void): void;
+	public getStatsPeriodSingle(userTag: string, period: string, isoIndex: number, callback: (doc: LokerStatDoc | null) => void): void {
+		
+		this.getStatsSingle(userTag, doc => {
+			if (doc) {
+				doc.meanderDays = Utils.getDatesInPeriod(doc.meanderDays, period as any, isoIndex);
+				callback(doc);
+			}
+		}, true);
+		
+	}
+
+	public getStatsPeriodAll(period: "year", isoIndex: number, callback: (docs: LokerStatDoc[] | null) => void): void;
+	public getStatsPeriodAll(period: "month", isoIndex: number, callback: (docs: LokerStatDoc[] | null) => void): void;
+	public getStatsPeriodAll(period: "week", isoIndex: number, callback: (docs: LokerStatDoc[] | null) => void): void;
+	public getStatsPeriodAll(period: string, isoIndex: number, callback: (docs: LokerStatDoc[] | null) => void): void {
+		
+		this.getStatsAll(docs => {
+			if (docs) {
+				docs.forEach(doc => {
+					doc.meanderDays = Utils.getDatesInPeriod(doc.meanderDays, period as any, isoIndex);
+				})
+
+				callback(docs);
+			}
+		
+		}, true);
+		
+	}
+
 	public addLokeDay(userTag: string, date?: Date, callback?: (result: UpdateWriteOpResult) => void): void {
-		this.getOneLokerStats(userTag, (doc) => {
+		this.getStatsSingle(userTag, (doc) => {
 			if (!doc) {
 				this.insertOneLoker(userTag, (result) => {
 					this.addLokeDay(userTag, date, callback);

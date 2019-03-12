@@ -64,7 +64,7 @@ typings/
 auth.json
 
 # compiled output
-out/**/*
+out
 
 # misc
 .directory
