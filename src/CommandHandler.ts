@@ -1,5 +1,5 @@
 import config from "./config.json";
-import { Message, GuildMember, MessageEmbed, User, Guild } from "discord.js";
+import { Message, GuildMember, MessageEmbed, User, Guild, RichEmbed } from "discord.js";
 import LokeBot from "./LokeBot";
 import moment from "moment";
 import stringifyObject from "stringify-object";
@@ -50,46 +50,46 @@ export class CommandHandler {
 				}
 			}
 
-			let embed = {
-				"title": "Registrerte loke-dager:",
-				"color": parseInt("9D05A6", 16),
-				"footer": {
-					"icon_url": "https://cdn.discordapp.com/avatars/546725392090791948/787e9d669a2144424171251ba42e2d9d.png?size=128",
-					"text": "Stats provided by LokeBot"
+			let embed = new RichEmbed({
+				title: "Registrerte loke-dager:",
+				color: parseInt("9D05A6", 16),
+				footer: {
+					icon_url: "https://cdn.discordapp.com/avatars/546725392090791948/787e9d669a2144424171251ba42e2d9d.png?size=128",
+					text: "Stats provided by LokeBot"
 				},
-				"thumbnail": {
-					"url": target.avatarURL
+				thumbnail: {
+					url: target.avatarURL
 				},
-				"author": {
-					"name": `${name}'s stats`,
-					"icon_url": target.avatarURL
+				author: {
+					name: `${name}'s stats`,
+					icon_url: target.avatarURL
 				},
-				"fields": [
+				fields: [
 					{
-						"name": "Denne uken:",
-						"value": "0",
-						"inline": true
+						name: "Denne uken:",
+						value: "0",
+						inline: true
 					},
 					{
-						"name": "Denne måneden:",
-						"value": "0",
-						"inline": true
+						name: "Denne måneden:",
+						value: "0",
+						inline: true
 					},
 					{
-						"name": "Totalt:",
-						"value": "0",
-						"inline": true
+						name: "Totalt:",
+						value: "0",
+						inline: true
 					},
 					{
-						"name": "Siste 5 registrerte loke-dager:",
-						"value": "```\nIngen registrerte loke-dager!```"
+						name: "Siste 5 registrerte loke-dager:",
+						value: "```\nIngen registrerte loke-dager!```"
 					}
 				]
-			};
+			});
 
 			this.bot.dbRemote.getStatsSingle(tag, doc => {
 
-				if (doc) {
+				if (doc && embed.fields != undefined) {
 
 					let lastMonth = Utils.getDatesInPeriod(doc.meanderDays, "month", now.month() + 1);
 					let lastWeek = Utils.getDatesInPeriod(doc.meanderDays, "week", now.isoWeek());
@@ -225,7 +225,7 @@ export class CommandHandler {
 
 		this.addCommand("owo", (msg, flags, args) => {
 
-			this.bot.userSay(msg.author, owofy(args.join(" ")), {}, msg.channel);
+			this.bot.userSay(msg.author, owofy(args.join(" ")), msg.channel);
 			if (msg.deletable) {
 				msg.delete();
 			}

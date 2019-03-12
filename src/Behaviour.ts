@@ -167,7 +167,7 @@ export function initBehaviour(bot: LokeBot): void {
 						result += (s.shift() as string).toLowerCase();
 					else result += (s.shift() as string).toUpperCase();
 				}
-				bot.userSay(user, result, {}, reaction.message.channel);
+				bot.userSay(user, result, reaction.message.channel);
 				
 			} else {
 				// §1 violation: tried to mock mockified message

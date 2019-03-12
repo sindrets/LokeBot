@@ -432,12 +432,19 @@ export default class LokeBot {
 	 * @param options 
 	 * @param channel 
 	 */
-	public userSay(user: User, content?: StringResolvable, options?: MessageOptions | RichEmbed | Attachment, channel?: TextChannel | DMChannel | GroupDMChannel): void {
+	public userSay(user: User, content?: StringResolvable, channel?: TextChannel | DMChannel | GroupDMChannel): void {
 
-		let s = `${user} 𝘀𝗮𝘆𝘀: ${content}`;
-
-		if (channel) channel.send(s, options);
-		else user.send(s, options);
+		let embed = new RichEmbed({
+			description: content,
+			color: parseInt("E64F25", 16),
+			author: {
+				name: `${user.username} says:`,
+				icon_url: user.avatarURL
+			}
+		})
+		
+		if (channel) channel.send("", { embed: embed });
+		else user.send("", { embed: embed });
 		
 	}
 
