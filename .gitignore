@@ -68,3 +68,5 @@ out/**/*
 
 # misc
 .directory
+.vscode
+docs

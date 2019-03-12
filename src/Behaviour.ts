@@ -105,7 +105,7 @@ export function initBehaviour(bot: LokeBot): void {
 		let loker = bot.getLokerById(msg.author.id);
 		if (msg.guild && loker && loker.status) {
 			let format: string = "hh:mm";
-			let t = moment().utc().utcOffset(config.utcTimezone * 60);
+			let t = moment.utc().add(config.utcTimezone, "hours");
 			let active: boolean = t.isBetween(moment(config.periodStart, format), moment(config.periodEnd, format));
 			if (active) {
 				loker.status = false;

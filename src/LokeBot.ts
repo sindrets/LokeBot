@@ -15,8 +15,18 @@ export default class LokeBot {
 
 	private ready: boolean = false;
 	
+	/**
+	 * A map where all the guilds the bot is member of is paired with
+	 * an array of its users.
+	 */
 	public guildMap!: GuildMap;
+	/**
+	 * A map where all unique users from all the guilds the bot is
+	 * member of, is paired with each respective user's [[Loker]]
+	 * object. 
+	 */
 	public userMap!: UserMap;
+	
 	public client: Client;
 	public dbRemote: DbRemote;
 	public commandHandler: CommandHandler;
@@ -50,6 +60,23 @@ export default class LokeBot {
 			
 		});
 
+		this.client.on("guildCreate", guild => {
+			this.addGuild(guild);
+			this.addGuildMembers(guild);
+		});
+
+		this.client.on("guildDelete", guild => {
+			this.removeGuild(guild);
+		});
+
+		this.client.on("guildMemberAdd", member => {
+			this.addMember(member);
+		});
+
+		this.client.on("guildMemberRemove", member => {
+			this.removeMember(member);
+		});
+
 		this.dbRemote.connect();
 
 		this.client.login(auth.TOKEN);
@@ -64,11 +91,13 @@ export default class LokeBot {
 
 	}
 
-	private populateGuildMap(): void {
+	/**
+	 * Adds a new guild to the guild map.
+	 * @param guild 
+	 */
+	private addGuild(guild: Guild): void {
 
-		this.guildMap = new Map<Guild, User[]>();
-
-		this.client.guilds.forEach((guild) => {
+		if (this.guildMap) {
 
 			let userList: User[] = [];
 			guild.members.forEach((member) => {
@@ -77,32 +106,132 @@ export default class LokeBot {
 				}
 			});
 			this.guildMap.set(guild, userList);
+			
+		}
+		
+	}
 
+	/**
+	 * Removes a guild from the guild map and any references it may have
+	 * in the user map.
+	 * @param guild 
+	 */
+	private removeGuild(guild: Guild) {
+
+		if (this.guildMap) {
+			this.guildMap.delete(guild);
+		}
+
+		if (this.userMap) {
+
+			guild.members.forEach(member => {
+				let loker = this.userMap.get(member.user);
+				if (loker) {
+					let i = loker.guilds.indexOf(guild);
+					if (i != -1) loker.guilds.splice(i, 1);
+				}
+			})
+			
+		}
+		
+	}
+
+	/**
+	 * Adds a guild to this user's list of guilds in the user map. If
+	 * it's a new user: add the user to the user map.
+	 * @param member 
+	 */
+	private addMember(member: GuildMember): void {
+
+		if (this.userMap) {
+
+			if (!member.user.bot) {
+				let loker = this.userMap.get(member.user);
+				if (loker == undefined) {
+					this.userMap.set(member.user, {user: member.user, status: false, guilds: [member.guild]});
+				} else {
+					loker.guilds.push(member.guild);
+				}
+			}
+			
+		}
+		
+	}
+
+	/**
+	 * Removes a guild from this user's list of guilds in the user map.
+	 * If the list is empty after this operation: the user is deleted
+	 * from the user map.
+	 * @param member 
+	 */
+	private removeMember(member: GuildMember): void {
+
+		if (this.userMap) {
+
+			let loker = this.userMap.get(member.user);
+			if (loker) {
+				let i = loker.guilds.indexOf(member.guild);
+				if (i != -1) loker.guilds.splice(i, 1);
+				
+				if (loker.guilds.length == 0)
+					this.userMap.delete(member.user);
+			}
+			
+		}
+
+		if (this.guildMap) {
+
+			let userList = this.guildMap.get(member.guild);
+			if (userList) {
+				let i = userList.indexOf(member.user);
+				if (i != -1) userList.splice(i, 1);
+			}
+			
+		}
+		
+	}
+
+	/**
+	 * Add all members of a guild to the user map.
+	 * @param guild The guild whose members to add
+	 */
+	private addGuildMembers(guild: Guild): void {
+
+		guild.members.forEach(member => {
+			this.addMember(member);
+		});
+		
+	}
+
+	/**
+	 * Initialize the guild map.
+	 */
+	private populateGuildMap(): void {
+
+		this.guildMap = new Map();
+
+		this.client.guilds.forEach((guild) => {
+			this.addGuild(guild);
 		});
 
 	}
 
+	/**
+	 * Initialize the user map.
+	 */
 	private populateUserMap(): void {
 
-		this.userMap = new Map<User, Loker>();
+		this.userMap = new Map();
 
 		this.client.guilds.forEach((guild) => {
-			guild.members.forEach((member) => {
-				if (!member.user.bot) {
-					let loker = this.userMap.get(member.user);
-					if (loker == undefined) {
-						this.userMap.set(member.user, {user: member.user, status: false, guilds: [guild]});
-					} else {
-						loker.guilds.push(guild);
-					}
-				}
-			})
+			this.addGuildMembers(guild);
 		});
 		
 	}
 
 	/**
 	 * Pretty print the guild map.
+	 * @param log Log output to console
 	 */
 	public ppGuildMap(log=false): string {
 
@@ -126,6 +255,7 @@ export default class LokeBot {
 
 	/**
 	 * Pretty print the user map.
+	 * @param log Log output to console
 	 */
 	public ppUserMap(log=false): string {
 
@@ -228,7 +358,7 @@ export default class LokeBot {
 	 * Override loke status of specific users.
 	 * @param conf An object with user queries as keys, and booleans as values
 	 * @param strict Whether or not the query should be strict 
-	 * @see LokeBot.queryUsers for details on how user queries work.
+	 * @see [[LokeBot.queryUsers]] for details on how user queries work.
 	 */
 	public overrideStatus(conf: {[key:string]: boolean}, strict=false): void {
 
@@ -308,10 +438,15 @@ export default class LokeBot {
 	/**
 	 * Query all users by username, or nickname and return a user if a match is found.
 	 * @param query A string that partially matches the username, or nickname (can be nickname from any server LokeBot is member)
-	 * @param guild The guild to be queried
 	 * @param strict If strict: query must be an exact, case-sensitive match of either username, or nickname
 	 */
 	public queryUsers(query: string, strict?: boolean): Loker | null;
+	/**
+	 * Query all users of a specified guild by username, or nickname and return a user if a match is found.
+	 * @param query A string that partially matches the username, or nickname (can be nickname from any server LokeBot is member)
+	 * @param guild The guild to be queried
+	 * @param strict If strict: query must be an exact, case-sensitive match of either username, or nickname
+	 */
 	public queryUsers(query: string, guild: Guild, strict?: boolean): GuildMember | null;
 	public queryUsers(query: string, strictOrGuild?: boolean | Guild, strict=false): Loker | GuildMember | null {
 

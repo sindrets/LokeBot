@@ -1,11 +1,12 @@
 {
   "name": "loke-bot",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "",
   "main": "out/Main.js",
   "scripts": {
     "start": "node out/Main.js",
-    "test": "node out/tests/testRunner.js"
+    "test": "node out/tests/testRunner.js",
+    "gen-docs": "typedoc --out docs src"
   },
   "repository": {
     "type": "git",
@@ -35,6 +36,7 @@
     "@types/node": "^11.9.4",
     "@types/node-schedule": "^1.2.3",
     "@types/sprintf-js": "^1.1.2",
-    "@types/stringify-object": "^3.2.0"
+    "@types/stringify-object": "^3.2.0",
+    "typedoc": "^0.14.2"
   }
 }

@@ -28,7 +28,7 @@ export class CommandHandler {
 		/**
 		 * if additional arg is supplied: query stats for that user.
 		 * @param args[0] user query 
-		 * @flag all
+		 * @flag --all
 		 */
 		this.addCommand("stats", (msg, flags, args) => {
 
@@ -97,7 +97,7 @@ export class CommandHandler {
 		});
 
 		/**
-		 * @flag here
+		 * @flag --here
 		 */
 		this.addCommand("help", (msg, flags, args) => {
 
@@ -196,6 +196,12 @@ export class CommandHandler {
 		
 	}
 
+	/**
+	 * Add a new command unless it's already defined.
+	 * @param cmd 
+	 * @param listener Callback function that is called when this
+	 * command is triggered.
+	 */
 	public addCommand(cmd: string, listener: (msg: Message, flags: FlagParser, ...args: any[]) => void): void {
 		if (this.handlers[cmd] != undefined) {
 			console.error(`That command has already been added: ${cmd}`);
@@ -204,15 +210,34 @@ export class CommandHandler {
 		this.handlers[cmd] = listener;
 	}
 
+	/**
+	 * Add a command regardless of whether or not it already exists. In
+	 * the case that it already exists; it will be replaced.
+	 * @param cmd 
+	 * @param listener 
+	 */
 	public forceAddCommand(cmd: string, listener: (msg: Message, flags: FlagParser, ...args: any[]) => void): void {
 		this.handlers[cmd] = listener;
 	}
 
+	/**
+	 * Run a command with the supplied flags and args.
+	 * @param cmd 
+	 * @param msg 
+	 * @param flags 
+	 * @param args 
+	 */
 	public runCommand(cmd: string, msg: Message, flags: FlagParser, ...args: any[]): void {
 		if (!this.handlers[cmd]) return;
 		this.handlers[cmd](msg, flags, args);
 	}
 
+	/**
+	 * Checks whether or not a message is a command (starts with command
+	 * prefix), and parses flags and args before running the command.
+	 * @param msg 
+	 * @see `Config.prefix` for command prefix.
+	 */
 	public parseCommand(msg: Message): void {
 		let content = msg.content;
 		content.trim();
