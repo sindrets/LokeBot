@@ -152,5 +152,20 @@ export class Utils {
 		return result;
 		
 	}
+
+	public static mockifyString(text: string): string {
+
+		let s = text.split("");
+		let result = "";
+		while (s.length > 0) {
+			let f = ~~(Math.random() * 2);
+			if (f == 0)
+				result += (s.shift() as string).toLowerCase();
+			else result += (s.shift() as string).toUpperCase();
+		}
+
+		return result;
+		
+	}
 	
 }

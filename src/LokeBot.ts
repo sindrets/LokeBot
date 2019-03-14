@@ -83,6 +83,10 @@ export default class LokeBot {
 			this.removeMember(member);
 		});
 
+		this.client.on("error", err => {
+			console.error(err);
+		});
+
 		this.dbRemote.connect();
 
 		this.client.login(auth.TOKEN);
@@ -426,39 +430,52 @@ export default class LokeBot {
 	}
 
 	/**
-	 * Say message in place of another user. 
+	 * Send a message in place of another user in the form of a rich
+	 * embed.
 	 * @param user 
-	 * @param content 
-	 * @param options 
+	 * @param embedContent 
+	 * @param messageContent 
 	 * @param channel 
 	 */
-	public userSay(user: User, content?: StringResolvable, channel?: TextChannel | DMChannel | GroupDMChannel): void {
+	public userSay(user: User, embedContent: StringResolvable, messageContent="", channel?: TextChannel | DMChannel | GroupDMChannel): void {
 
+		let displayName = user.username;
+		if (channel && channel instanceof TextChannel) {
+			let member = this.queryUsers(user.tag, channel.guild, true);
+			if (member) displayName = member.displayName;
+		}
+		
 		let embed = new RichEmbed({
-			description: content,
+			description: embedContent,
 			color: parseInt("E64F25", 16),
 			author: {
-				name: `${user.username} says:`,
+				name: `${displayName} says:`,
 				icon_url: user.avatarURL
 			}
 		})
 		
-		if (channel) channel.send("", { embed: embed });
-		else user.send("", { embed: embed });
+		if (channel) channel.send(messageContent, { embed: embed });
+		else user.send(messageContent, { embed: embed });
 		
 	}
 
 	/**
-	 * Query all users by username, or nickname and return a user if a match is found.
-	 * @param query A string that partially matches the username, or nickname (can be nickname from any server LokeBot is member)
-	 * @param strict If strict: query must be an exact, case-sensitive match of either username, or nickname
+	 * Query all users by user tag, or nickname and return a user if a
+	 * match is found.
+	 * @param query A string that partially matches the user tag, or
+	 * nickname (can be nickname from any guild LokeBot is member)
+	 * @param strict If strict: query must be an exact, case-sensitive
+	 * match of either user tag, or nickname
 	 */
 	public queryUsers(query: string, strict?: boolean): Loker | null;
 	/**
-	 * Query all users of a specified guild by username, or nickname and return a user if a match is found.
-	 * @param query A string that partially matches the username, or nickname (can be nickname from any server LokeBot is member)
+	 * Query all users of a specified guild by user tag, or nickname and
+	 * return a user if a match is found.
+	 * @param query A string that partially matches the user tag, or
+	 * nickname (the nickname used in the specified guild).
 	 * @param guild The guild to be queried
-	 * @param strict If strict: query must be an exact, case-sensitive match of either username, or nickname
+	 * @param strict If strict: query must be an exact, case-sensitive
+	 * match of either user tag, or nickname
 	 */
 	public queryUsers(query: string, guild: Guild, strict?: boolean): GuildMember | null;
 	public queryUsers(query: string, strictOrGuild?: boolean | Guild, strict=false): Loker | GuildMember | null {
@@ -471,14 +488,14 @@ export default class LokeBot {
 				if (member.nickname && member.nickname.toLowerCase().indexOf(query.toLowerCase()) != -1) {
 					return true;
 				}
-				else if (member.user.username.toLowerCase().indexOf(query.toLowerCase()) != -1) {
+				else if (member.user.tag.toLowerCase().indexOf(query.toLowerCase()) != -1) {
 					return true;
 				}
 			} else {
 				if (member.nickname == query) {
 					return true;
 				}
-				else if (member.user.username == query) {
+				else if (member.user.tag == query) {
 					return true;
 				}
 			}
@@ -507,12 +524,11 @@ export default class LokeBot {
 		// guild was provided
 		else if (strictOrGuild instanceof Guild) {
 			strictOrGuild.members.some(member => {
-				let stop = false;
 				if (match(member)) {
 					result = member;
-					stop = true;
+					return true;
 				}
-				return stop;
+				return false;
 			})
 		}
 

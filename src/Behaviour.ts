@@ -4,6 +4,7 @@ import config from "./config.json";
 import { Guild, GuildMember, Message, TextChannel } from "discord.js";
 import { Rules } from "./Rules";
 import { sprintf } from "sprintf-js";
+import { Utils } from "./Utils";
 
 const CACHE_SIZE: number = 100;
 var mockMsgCache: Map<string, Message> = new Map();
@@ -30,6 +31,8 @@ export function initBehaviour(bot: LokeBot): void {
 				})
 
 			})
+
+			bot.dbRemote.setStateAll(true);
 		});
 	});
 
@@ -46,53 +49,68 @@ export function initBehaviour(bot: LokeBot): void {
 
 		console.log("Prosecuting lokere...");
 
-		// map out all guilty users from each guild and add Loker role 
-		// on all the users' guilds. Register day in database.
-		let guiltyMap: Map<Guild, GuildMember[]> = new Map<Guild, GuildMember[]>();
+		bot.dbRemote.getStateAll(docs => {
 
-		bot.iterateLokere(loker => {
+			// map out all guilty users from each guild and add Loker role 
+			// on all the users' guilds. Register day in database.
+			let guiltyMap: Map<Guild, GuildMember[]> = new Map();
+			let dbStates = docs || [];
+
+			bot.iterateLokere(loker => {
+
+				let dbState = true;
+				dbStates.slice(0).some((doc, i) => {
+					if (doc.user == loker.user.tag) {
+						dbState = doc.state;
+						dbStates.splice(i, 1);
+						return true;
+					}
+					return false;
+				})
 			
-			bot.getMemberships(loker.user).forEach(member => {
-				let memberList = guiltyMap.get(member.guild);
-				if (!memberList) {
-					guiltyMap.set(member.guild, []);
-					memberList = guiltyMap.get(member.guild);
+				bot.getMemberships(loker.user).forEach(member => {
+					let memberList = guiltyMap.get(member.guild);
+					if (!memberList) {
+						memberList = [];
+						guiltyMap.set(member.guild, memberList);
+					}
+					if (loker.status && dbState) {
+						memberList.push(member);
+	
+						// Add Loker role
+						bot.getLokerRole(member.guild).then(role => {
+							member.addRole(role);
+						})
+						// Register a new loke-day in the database
+						bot.dbRemote.addDaySingle(member.user.tag);
+					}
+	
+				})
+	
+			});
+	
+			// Iterate over all guilds, and announce lokere
+			guiltyMap.forEach((memberList, guild, c) => {
+	
+				let channel = LokeBot.getBotChannel(guild);
+				if (channel) {
+					if (memberList.length > 0) {
+						channel.send("⚠ DAGENS LOKERE ER DØMT! ⚠");
+						let s = "";
+						memberList.forEach(user => {
+							s += `${user} `;
+						});
+						channel.send(s);
+						bot.ppUserList(memberList, true);
+					} else {
+						channel.send("Ingen lokere i dag! 🤔");
+					}
 				}
-				if (loker.status && memberList) {
-					memberList.push(member);
-
-					// Add Loker role
-					bot.getLokerRole(member.guild).then(role => {
-						member.addRole(role);
-					})
-					// Register a new loke-day in the database
-					bot.dbRemote.addLokeDay(member.user.tag);
-				}
-
 			})
-
-		});
-
-		// Iterate over all guilds, and announce lokere
-		guiltyMap.forEach((memberList, guild, c) => {
-
-			let channel = LokeBot.getBotChannel(guild);
-			if (channel) {
-				if (memberList.length > 0) {
-					channel.send("⚠ DAGENS LOKERE ER DØMT! ⚠");
-					let s = "";
-					memberList.forEach(user => {
-						s += `${user} `;
-					});
-					channel.send(s);
-					bot.ppUserList(memberList, true);
-				} else {
-					channel.send("Ingen lokere i dag! 🤔");
-				}
-			}
+	
+			bot.logNextInvocations();
+			
 		})
-
-		bot.logNextInvocations();
 
 	});
 
@@ -123,6 +141,8 @@ export function initBehaviour(bot: LokeBot): void {
 					msg.channel.send(sprintf(sList[i], msg.author));
 					
 				});
+
+				bot.dbRemote.setStateSingle(msg.author.tag, false);
 			}
 		}
 
@@ -159,15 +179,12 @@ export function initBehaviour(bot: LokeBot): void {
 					return;
 				}
 
-				let s = reaction.message.content.split("");
-				let result = `${reaction.message.author} `;
-				while (s.length > 0) {
-					let f = ~~(Math.random() * 2);
-					if (f == 0)
-						result += (s.shift() as string).toLowerCase();
-					else result += (s.shift() as string).toUpperCase();
-				}
-				bot.userSay(user, result, reaction.message.channel);
+				bot.userSay(
+					user, 
+					Utils.mockifyString(reaction.message.content), 
+					reaction.message.author.toString(), 
+					reaction.message.channel
+				);
 				
 			} else {
 				// §1 violation: tried to mock mockified message

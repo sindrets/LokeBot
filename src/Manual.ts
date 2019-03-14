@@ -50,6 +50,15 @@ export const manual: Manual = {
  * Owoify a string.
  * @param message: <String> The string to owoify.
  * @example ${config.prefix}owo *notices buldge* !!
- */`
+ */`,
+
+	"mock":
+`mock message
+/**
+ * Mockify a string.
+ * @param message: <String> The string to mockify.
+ * @example ${config.prefix}mock I mean, not to discriminate or
+ * anything, but... BLIND PEOPLE 😂😂🤣🤣🤣
+ */`,
 
 }

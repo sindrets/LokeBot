@@ -225,11 +225,30 @@ export class CommandHandler {
 
 		this.addCommand("owo", (msg, flags, args) => {
 
-			this.bot.userSay(msg.author, owofy(args.join(" ")), msg.channel);
+			if (args.length == 0) {
+				msg.reply("Please provide a string to owofy. For usage; `#!help owo`");
+				return;
+			}
+			
+			this.bot.userSay(msg.author, owofy(args.join(" ")), "", msg.channel);
 			if (msg.deletable) {
 				msg.delete();
 			}
 
+		})
+
+		this.addCommand("mock", (msg, flags, args) => {
+
+			if (args.length == 0) {
+				msg.reply("Please provide a string to mockify. For usage; `#!help mock`");
+				return;
+			}
+
+			this.bot.userSay(msg.author, Utils.mockifyString(args.join(" ")), "", msg.channel);
+			if (msg.deletable) {
+				msg.delete();
+			}
+			
 		})
 
 	}
