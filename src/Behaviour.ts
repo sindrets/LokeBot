@@ -58,7 +58,7 @@ export function initBehaviour(bot: LokeBot): void {
 
 			bot.iterateLokere(loker => {
 
-				let dbState = true;
+				let dbState = loker.status;
 				dbStates.slice(0).some((doc, i) => {
 					if (doc.user == loker.user.tag) {
 						dbState = doc.state;
@@ -74,7 +74,7 @@ export function initBehaviour(bot: LokeBot): void {
 						memberList = [];
 						guiltyMap.set(member.guild, memberList);
 					}
-					if (loker.status && dbState) {
+					if (dbState) {
 						memberList.push(member);
 	
 						// Add Loker role
@@ -142,7 +142,7 @@ export function initBehaviour(bot: LokeBot): void {
 					
 				});
 
-				bot.dbRemote.setStateSingle(msg.author.tag, false);
+				bot.dbRemote.setStateSingle(loker.user.tag, false);
 			}
 		}
 
