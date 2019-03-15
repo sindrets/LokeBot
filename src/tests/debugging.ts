@@ -1,6 +1,6 @@
 import LokeBot from "../LokeBot";
 import { BotEvent } from "../Constants";
-import { EventHandler } from "src/EventHandler";
+import { EventHandler } from "../EventHandler";
 
 const bot = new LokeBot();
 EventHandler.on(BotEvent.BOT_READY, () => {

@@ -1,15 +1,15 @@
-import config from "./config.json";
-import { Message, GuildMember, MessageEmbed, User, Guild, RichEmbed } from "discord.js";
-import LokeBot from "./LokeBot";
+import { Guild, GuildMember, Message, RichEmbed, User } from "discord.js";
 import moment from "moment";
-import stringifyObject from "stringify-object";
 import owofy from "owofy";
-import { manual } from "./Manual";
-import { Loker, GelbooruResponseBody } from "./Interfaces";
-import { TrashConveyor } from "./TrashConveyor";
-import { Rules } from "./Rules";
-import { Utils } from "./Utils";
+import stringifyObject from "stringify-object";
+import config from "./config.json";
 import { FlagParser } from "./FlagParser.js";
+import { GelbooruResponseBody } from "./Interfaces";
+import LokeBot from "./LokeBot";
+import { manual } from "./Manual";
+import { Rules } from "./Rules";
+import { TrashConveyor } from "./TrashConveyor";
+import { Utils } from "./Utils";
 
 type CmdHandlerDict = { [key: string]: (msg: Message, flags: FlagParser, ...args: any[]) => void };
 

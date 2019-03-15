@@ -1,6 +1,6 @@
-import { BotEvent } from "./Constants";
-import { EventListenerDict, OnceEventListenerDict, EventListener } from "./Interfaces";
 import stringify from "stringify-object";
+import { BotEvent } from "./Constants";
+import { EventListenerDict, OnceEventListenerDict } from "./Interfaces";
 
 export class EventHandler {
 

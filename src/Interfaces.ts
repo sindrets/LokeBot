@@ -1,4 +1,4 @@
-import { Guild, GuildMember, User } from "discord.js";
+import { Guild, User } from "discord.js";
 import LokeBot from "./LokeBot";
 
 export type GuildMap = Map<Guild, User[]>;

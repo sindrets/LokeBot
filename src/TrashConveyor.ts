@@ -1,6 +1,6 @@
-import { GelbooruSpec, GelbooruResponseBody } from "./Interfaces";
-import auth from "./auth.json";
 import got from "got";
+import auth from "./auth.json";
+import { GelbooruResponseBody, GelbooruSpec } from "./Interfaces";
 import { Utils } from "./Utils";
 
 export class TrashConveyor {

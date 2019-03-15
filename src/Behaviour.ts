@@ -1,9 +1,9 @@
-import LokeBot from "./LokeBot";
-import moment from "moment";
-import config from "./config.json";
 import { Guild, GuildMember, Message, TextChannel } from "discord.js";
-import { Rules } from "./Rules";
+import moment from "moment";
 import { sprintf } from "sprintf-js";
+import config from "./config.json";
+import LokeBot from "./LokeBot";
+import { Rules } from "./Rules";
 import { Utils } from "./Utils";
 
 const CACHE_SIZE: number = 100;
@@ -114,6 +114,23 @@ export function initBehaviour(bot: LokeBot): void {
 
 	});
 
+	// weekend announcement
+	bot.scheduleJobUtc("Weekend Announcement", { hour: 16, minute: 0, second: 0 }, config.utcTimezone, () => {
+		
+		let now = moment.utc().isoWeekday();
+		if (now == 5) {
+
+			bot.guildMap.forEach((users, guild) => {
+				let channel = LokeBot.getBotChannel(guild);
+				if (channel) {
+					channel.send("🍻 @everyone 🍻", { file: "https://i.imgur.com/sde4YwH.png" });
+				}
+			})
+			
+		}
+		
+	});
+
 	bot.client.on("message", msg => {
 
 		bot.commandHandler.parseCommand(msg);
@@ -131,20 +148,24 @@ export function initBehaviour(bot: LokeBot): void {
 					if ( (doc && doc.state && loker) || (!doc && loker) ) {
 						loker.status = false;
 						bot.dbRemote.setStateSingle(loker.user.tag, false);
-						bot.getRuttaRole(msg.guild).then(role => {
 
-							msg.member.addRole(role);
+						let sList: string[] = [
+							"Sjekk hvem som er rutta! Det er %s!",
+							"Hvem loker? Hvertfall ikke %s!",
+							"Hva faaaen a? Sjekk %s er rutta!"
+						];
+						let i = ~~(Math.random() * sList.length);
+						msg.channel.send(sprintf(sList[i], msg.author));
 
-							let sList: string[] = [
-								"Sjekk hvem som er rutta! Det er %s!",
-								"Hvem loker? Hvertfall ikke %s!",
-								"Hva faaaen a? Sjekk %s er rutta!"
-							];
-							let i = ~~(Math.random() * sList.length);
-
-							msg.channel.send(sprintf(sList[i], msg.author));
-							
-						});
+						// add Rutta-gutta role
+						loker.guilds.forEach(guild => {
+							bot.getRuttaRole(guild).then(role => {
+								if (loker) {
+									let member = bot.queryUsers(loker.user.tag, guild, true);
+									if (member) member.addRole(role);
+								}
+							})
+						})
 					}
 					else if (doc && loker) {
 						loker.status = doc.state;

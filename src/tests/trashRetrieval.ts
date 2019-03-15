@@ -1,6 +1,6 @@
-import LokeBot from "../LokeBot";
 import { BotEvent } from "../Constants";
 import { EventHandler } from "../EventHandler";
+import LokeBot from "../LokeBot";
 import { TrashConveyor } from "../TrashConveyor";
 
 const bot = new LokeBot();

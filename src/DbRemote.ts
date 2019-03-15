@@ -1,9 +1,9 @@
-import { MongoClient, Db, Collection, InsertOneWriteOpResult, UpdateWriteOpResult, MongoError } from "mongodb";
-import { sprintf } from "sprintf-js";
 import assert from "assert";
+import { Collection, Db, InsertOneWriteOpResult, MongoClient, MongoError, UpdateWriteOpResult } from "mongodb";
+import { sprintf } from "sprintf-js";
 import auth from "./auth.json";
-import { EventHandler } from "./EventHandler.js";
 import { BotEvent } from "./Constants.js";
+import { EventHandler } from "./EventHandler.js";
 import { LokerStatDoc, LokerStateDoc } from "./Interfaces.js";
 import { Utils } from "./Utils.js";
 

@@ -1,14 +1,14 @@
-import { Client, TextChannel, Guild, GuildChannel, GuildMember, Role, User, StringResolvable, MessageOptions, RichEmbed, DMChannel, GroupDMChannel, Attachment } from "discord.js";
-import { BotEvent } from "./Constants";
+import { Client, DMChannel, GroupDMChannel, Guild, GuildChannel, GuildMember, RichEmbed, Role, StringResolvable, TextChannel, User } from "discord.js";
+import Long from "long";
 import moment from "moment";
 import schedule, { Job } from "node-schedule";
-import Long from "long";
 import auth from "./auth.json";
+import { initBehaviour } from "./Behaviour";
 import { CommandHandler } from "./CommandHandler";
+import { BotEvent } from "./Constants";
 import { DbRemote } from "./DbRemote";
 import { EventHandler } from "./EventHandler";
 import { GuildMap, Loker, UserMap } from "./Interfaces";
-import { initBehaviour } from "./Behaviour";
 import { RuleEnforcer } from "./RuleEnforcer";
 
 export default class LokeBot {

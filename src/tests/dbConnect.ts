@@ -1,7 +1,6 @@
-
+import assert from "assert";
 import { MongoClient } from "mongodb";
 import { sprintf } from "sprintf-js";
-import assert from "assert";
 import auth from "../auth.json";
 
 const uri: string = sprintf(auth.SRV_ADDRESS, auth.DB_U, auth.DB_P);
