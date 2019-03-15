@@ -126,23 +126,32 @@ export function initBehaviour(bot: LokeBot): void {
 			let t = moment.utc().add(config.utcTimezone, "hours");
 			let active: boolean = t.isBetween(moment(config.periodStart, format), moment(config.periodEnd, format));
 			if (active) {
-				loker.status = false;
-				bot.getRuttaRole(msg.guild).then(role => {
+				bot.dbRemote.getStateSingle(loker.user.tag, doc => {
+					
+					if ( (doc && doc.state && loker) || (!doc && loker) ) {
+						loker.status = false;
+						bot.dbRemote.setStateSingle(loker.user.tag, false);
+						bot.getRuttaRole(msg.guild).then(role => {
 
-					msg.member.addRole(role);
+							msg.member.addRole(role);
 
-					let sList: string[] = [
-						"Sjekk hvem som er rutta! Det er %s!",
-						"Hvem loker? Hvertfall ikke %s!",
-						"Hva faaaen a? Sjekk %s er rutta!"
-					];
-					let i = ~~(Math.random() * sList.length);
+							let sList: string[] = [
+								"Sjekk hvem som er rutta! Det er %s!",
+								"Hvem loker? Hvertfall ikke %s!",
+								"Hva faaaen a? Sjekk %s er rutta!"
+							];
+							let i = ~~(Math.random() * sList.length);
 
-					msg.channel.send(sprintf(sList[i], msg.author));
+							msg.channel.send(sprintf(sList[i], msg.author));
+							
+						});
+					}
+					else if (doc && loker) {
+						loker.status = doc.state;
+					}
 					
 				});
 
-				bot.dbRemote.setStateSingle(loker.user.tag, false);
 			}
 		}
 
