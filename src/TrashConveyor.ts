@@ -40,7 +40,12 @@ export class TrashConveyor {
 		try {
 			const response = await got(uri, { json: true });
 			result = response.body as any;
-			if (response.body.length == 0) TrashConveyor.randPostPageCntr = 0;
+			if (response.body.length == 0) {
+				if (TrashConveyor.randPostPageCntr > 0) {
+					TrashConveyor.randPostPageCntr = 0;
+					return TrashConveyor.requestPosts(spec);
+				}
+			}
 		} catch (error) {
 			console.log(error.response.body);
 			//=> 'Internal server error ...'

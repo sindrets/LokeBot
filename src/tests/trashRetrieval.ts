@@ -10,5 +10,5 @@ EventHandler.on(BotEvent.BOT_READY, () => {
         console.log(resp);
     });
     
-});
+}, true);
 bot.start();

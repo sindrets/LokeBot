@@ -35,9 +35,22 @@ export interface LokerStateDoc {
     state: boolean
 }
 
+export type EventListener = {
+    requirements: string[],
+    callback: Function
+}
+
 export interface EventListenerDict { 
-	[key: string]: Function[] 
+	[key: string]: EventListener[]
 };
+
+export interface OnceEventListenerDict {
+    [key: string]: undefined | {
+        done: boolean,
+        args: any[],
+        listeners: EventListener[]
+    }
+}
 
 export interface IndexedLokeBot extends LokeBot {
 	[key: string]: any;
