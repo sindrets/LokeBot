@@ -157,15 +157,17 @@ export function initBehaviour(bot: LokeBot): void {
 						let i = ~~(Math.random() * sList.length);
 						msg.channel.send(sprintf(sList[i], msg.author));
 
-						// add Rutta-gutta role
-						loker.guilds.forEach(guild => {
-							bot.getRuttaRole(guild).then(role => {
-								if (loker) {
-									let member = bot.queryUsers(loker.user.tag, guild, true);
-									if (member) member.addRole(role);
-								}
+						// add Rutta-gutta role if it's not a weekend
+						if (t.isoWeekday() != 6 && t.isoWeekday() != 7) {
+							loker.guilds.forEach(guild => {
+								bot.getRuttaRole(guild).then(role => {
+									if (loker) {
+										let member = bot.queryUsers(loker.user.tag, guild, true);
+										if (member) member.addRole(role);
+									}
+								})
 							})
-						})
+						}
 					}
 					else if (doc && loker) {
 						loker.status = doc.state;
