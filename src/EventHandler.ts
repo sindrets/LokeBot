@@ -1,6 +1,7 @@
 import stringify from "stringify-object";
 import { BotEvent } from "./Constants";
 import { EventListenerDict, OnceEventListenerDict } from "./Interfaces";
+import { Logger } from "Logger";
 
 export class EventHandler {
 
@@ -22,7 +23,7 @@ export class EventHandler {
 		let eventList: string[] = [];
 		if (event instanceof Array) {
 			if (!once) {
-				console.error("Multi-event subscriptions aren't permitted for non-singular events!");
+				Logger.error("Multi-event subscriptions aren't permitted for non-singular events!");
 				return;
 			}
 			(eventList as any[]) = event;
@@ -110,7 +111,7 @@ export class EventHandler {
 			onceEventListeners: EventHandler.onceEventListeners 
 		});
 
-		if (log) console.log(s);
+		if (log) Logger.println(s);
 
 		return s;
 		

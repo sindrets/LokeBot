@@ -1,11 +1,12 @@
 {
   "name": "loke-bot",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "",
   "main": "out/Main.js",
   "scripts": {
     "start": "node out/Main.js",
     "test": "node out/tests/testRunner.js",
+    "debug": "node out/Main.js --debug --user=debugger",
     "gen-docs": "typedoc --out docs src"
   },
   "repository": {
@@ -19,7 +20,9 @@
   },
   "homepage": "https://github.com/sindrets/LokeBot#readme",
   "dependencies": {
+    "chalk": "^2.4.2",
     "discord.js": "^11.4.2",
+    "get-cursor-position": "^1.0.5",
     "got": "^9.6.0",
     "long": "^4.0.0",
     "moment": "^2.24.0",

@@ -1,4 +1,5 @@
 import moment = require("moment");
+import { Logger } from "Logger";
 
 export class Utils {
 
@@ -30,7 +31,7 @@ export class Utils {
 	return the closest of the extremes. */
 	public static clamp(value: number, min: number, max: number): number {
 		if (max < min) {
-			console.warn("Clamp was called with a max value less than the min value!")
+			Logger.warn("Clamp was called with a max value less than the min value!")
 			max = min;
 		}
 		if (value < min) return min;
@@ -118,10 +119,7 @@ export class Utils {
 		});
 	}
 
-	public static getDatesInPeriod(dates: Date[], period: "year", isoIndex: number): Date[];
-	public static getDatesInPeriod(dates: Date[], period: "month", isoIndex: number): Date[];
-	public static getDatesInPeriod(dates: Date[], period: "week", isoIndex: number): Date[];
-	public static getDatesInPeriod(dates: Date[], period: string, isoIndex: number): Date[] {
+	public static getDatesInPeriod(dates: Date[], period: "year" | "month" | "week", isoIndex: number): Date[] {
 		
 		let result: Date[] = [];
 
@@ -166,6 +164,19 @@ export class Utils {
 
 		return result;
 		
+	}
+
+	/**
+	 * Strips leading and trailing quotes.
+	 * @param text 
+	 */
+	public static unquote(text: string): string {
+		let result = text;
+		let match = text.match(/((^(?!\\)["'])(.*)((?<!\\)\2$))/g);
+		if (match) {
+			result = match[0].substr(1, match[0].length-2);
+		}
+		return result;
 	}
 	
 }

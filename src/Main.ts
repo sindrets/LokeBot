@@ -1,4 +1,10 @@
-import LokeBot from "./LokeBot";
+// set custom import paths
+process.env.NODE_PATH = __dirname;
+require("module").Module._initPaths();
 
-const bot = new LokeBot();
+import LokeBot from "./LokeBot";
+import { FlagParser } from "FlagParser";
+
+let flags = FlagParser.parseFlags(process.argv.slice(2));
+const bot = new LokeBot(flags);
 bot.start();

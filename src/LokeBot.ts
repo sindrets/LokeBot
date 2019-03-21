@@ -1,17 +1,22 @@
+import auth from "auth.json";
+import { initBehaviour } from "Behaviour";
+import { CommandHandler } from "CommandHandler";
+import { BotEvent } from "Constants";
+import { DbRemote } from "DbRemote";
 import { Client, DMChannel, GroupDMChannel, Guild, GuildChannel, GuildMember, RichEmbed, Role, StringResolvable, TextChannel, User } from "discord.js";
+import { EventHandler } from "EventHandler";
+import { FlagParser } from "FlagParser.js";
+import { GuildMap, Loker, UserMap } from "Interfaces";
+import { Logger } from "Logger.js";
 import Long from "long";
 import moment from "moment";
 import schedule, { Job } from "node-schedule";
-import auth from "./auth.json";
-import { initBehaviour } from "./Behaviour";
-import { CommandHandler } from "./CommandHandler";
-import { BotEvent } from "./Constants";
-import { DbRemote } from "./DbRemote";
-import { EventHandler } from "./EventHandler";
-import { GuildMap, Loker, UserMap } from "./Interfaces";
-import { RuleEnforcer } from "./RuleEnforcer";
+import { RuleEnforcer } from "RuleEnforcer";
 
 export default class LokeBot {
+
+	public static DEBUG_MODE: boolean = false;
+	public static TOKEN: string = auth.TOKEN;
 
 	private ready: boolean = false;
 	
@@ -32,7 +37,27 @@ export default class LokeBot {
 	public commandHandler: CommandHandler;
 	public ruleEnforcer: RuleEnforcer;
 
-	constructor() {
+	constructor(flags?: FlagParser) {
+
+		if (flags) {
+
+			if (flags.isTrue("debug")) {
+				LokeBot.DEBUG_MODE = true;
+				Logger.debugln("Running in debug mode!");
+				Logger.debugln("flags: " + flags);
+			}
+
+			let user = flags.get("user");
+			switch (user) {
+				case "debugger":
+					LokeBot.TOKEN = auth.DEBUG_TOKEN;
+					break;
+				case "default":
+				default:
+					LokeBot.TOKEN = auth.TOKEN;
+			}
+
+		}
 
 		this.client = new Client();
 		this.dbRemote = new DbRemote();
@@ -48,7 +73,7 @@ export default class LokeBot {
 		
 		this.client.on('ready', () => {
 
-			console.log(`Logged in as ${this.client.user.tag}!`);
+			Logger.info(`Logged in as ${this.client.user.tag}!`);
 			
 			this.populateGuildMap();
 			this.populateUserMap();
@@ -84,19 +109,19 @@ export default class LokeBot {
 		});
 
 		this.client.on("error", err => {
-			console.error(err);
+			Logger.error(err);
 		});
 
 		this.dbRemote.connect();
 
-		this.client.login(auth.TOKEN);
+		this.client.login(LokeBot.TOKEN);
 
 	}
 
 	public logNextInvocations(): void {
 
 		for (let job in schedule.scheduledJobs) {
-			console.log(`Job <${job}> next invocation: ` + schedule.scheduledJobs[job].nextInvocation());
+			Logger.info(`Job <${job}> next invocation: ` + schedule.scheduledJobs[job].nextInvocation());
 		}
 
 	}
@@ -257,7 +282,7 @@ export default class LokeBot {
 		});
 
 		let s = JSON.stringify(dict, undefined, 2);
-		if (log) console.log(s);
+		if (log) Logger.println(s);
 
 		return s;
 
@@ -287,7 +312,7 @@ export default class LokeBot {
 		});
 
 		let s = JSON.stringify(dict, undefined, 2);
-		if (log) console.log(s);
+		if (log) Logger.println(s);
 
 		return s;
 		
@@ -313,7 +338,7 @@ export default class LokeBot {
 		}
 
 		let s = JSON.stringify(temp, undefined, 2);
-		if (log) console.log(s);
+		if (log) Logger.println(s);
 		
 		return s;
 		
@@ -586,10 +611,10 @@ export default class LokeBot {
 	 */
 	public async shutdown(): Promise<void> {
 
-		console.log("Closing connections and shutting down...");
+		Logger.println("Closing connections and shutting down...");
 		await this.client.destroy();
 		await this.dbRemote.closeConnection();
-		console.log("Successfully closed all connections!");
+		Logger.println("Successfully closed all connections!");
 		process.exit(0);
 
 	}

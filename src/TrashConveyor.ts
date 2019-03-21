@@ -2,6 +2,7 @@ import got from "got";
 import auth from "./auth.json";
 import { GelbooruResponseBody, GelbooruSpec } from "./Interfaces";
 import { Utils } from "./Utils";
+import { Logger } from "Logger.js";
 
 export class TrashConveyor {
 
@@ -47,7 +48,7 @@ export class TrashConveyor {
 				}
 			}
 		} catch (error) {
-			console.log(error.response.body);
+			Logger.println(error.response.body);
 			//=> 'Internal server error ...'
 		}
 

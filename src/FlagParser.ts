@@ -1,3 +1,4 @@
+import { Utils } from "Utils";
 
 export class FlagParser extends Map<string,string> {
 
@@ -11,6 +12,20 @@ export class FlagParser extends Map<string,string> {
 
         let f = this.get(flag);
         return f ? f.toLowerCase() == "true" : false;
+        
+    }
+
+    public toString(): string {
+
+        let result = "";
+        let sep = this.size > 3 ? "\n" : " ";
+        let keys = this.keys();
+        let key: string;
+        while ((key = keys.next().value) !== undefined) {
+            result += `,${sep}'${key}' => '${this.get(key)}'`;
+        }
+        
+        return `[Map] { ${result.substr(2)} }`;
         
     }
 
@@ -39,9 +54,9 @@ export class FlagParser extends Map<string,string> {
             if (arg.substr(0, 2) == "--") {
                 let value: string = "";
                 let identifier = arg.substring(2);
-                let tmp = arg.match(/\=(["'])(?:(?=(\\?))\2.)*?\1/);
-                if (tmp) {
-                    value = tmp[0].substring(2, tmp[0].length-1);
+                let match = identifier.match(/((\=(["'])(?:(?=(\\?))\4.)*?\3)|(\=[^\s]*))/gm);
+                if (match) {
+                    value = Utils.unquote(match[0].substr(1, match[0].length-1));
                     identifier = arg.substring(2, arg.indexOf("="));
                 }
                 else value = "true";

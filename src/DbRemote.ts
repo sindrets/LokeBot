@@ -6,6 +6,7 @@ import { BotEvent } from "./Constants.js";
 import { EventHandler } from "./EventHandler.js";
 import { LokerStatDoc, LokerStateDoc } from "./Interfaces.js";
 import { Utils } from "./Utils.js";
+import { Logger } from "Logger.js";
 
 export class DbRemote {
 
@@ -30,8 +31,8 @@ export class DbRemote {
 	public connect(): void {
 		MongoClient.connect(this.uri, {useNewUrlParser: true}, (err, dbClient) => {
 			assert.strictEqual(err, null);
-			if (err) console.error(err.errmsg);
-			console.log("Successfully connected to the database!");
+			if (err) Logger.error(err.errmsg);
+			Logger.success("Successfully connected to the database!");
 
 			this.dbClient = dbClient;
 			this.db = dbClient.db(this.dbName);
@@ -161,7 +162,7 @@ export class DbRemote {
 		
 		this.getStatsSingle(userTag, (doc, err) => {
 			if (doc) {
-				doc.meanderDays = Utils.getDatesInPeriod(doc.meanderDays, period as any, isoIndex);
+				doc.meanderDays = Utils.getDatesInPeriod(doc.meanderDays, period, isoIndex);
 				callback(doc, err);
 			}
 		}, true);
@@ -183,7 +184,7 @@ export class DbRemote {
 		this.getStatsAll((docs, err) => {
 			if (docs) {
 				docs.forEach(doc => {
-					doc.meanderDays = Utils.getDatesInPeriod(doc.meanderDays, period as any, isoIndex);
+					doc.meanderDays = Utils.getDatesInPeriod(doc.meanderDays, period, isoIndex);
 				})
 
 				callback(docs, err);
