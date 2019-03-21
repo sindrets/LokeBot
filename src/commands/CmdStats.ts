@@ -2,7 +2,7 @@ import { CommandHandler } from "CommandHandler";
 import config from "config.json";
 import { Guild, GuildMember, RichEmbed, User } from "discord.js";
 import LokeBot from "LokeBot";
-import { Utils } from "Utils";
+import { Utils } from "misc/Utils";
 import moment = require("moment");
 
 export function init(ch: CommandHandler, bot: LokeBot) {

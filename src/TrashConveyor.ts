@@ -1,7 +1,7 @@
 import got from "got";
 import auth from "./auth.json";
 import { GelbooruResponseBody, GelbooruSpec } from "./Interfaces";
-import { Utils } from "./Utils";
+import { Utils } from "./misc/Utils";
 import { Logger } from "Logger.js";
 
 export class TrashConveyor {

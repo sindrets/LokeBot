@@ -1,6 +1,6 @@
 import { TextChannel, User } from "discord.js";
 import { Rules } from "./Rules";
-import { Utils } from "./Utils";
+import { Utils } from "./misc/Utils";
 import { TrashConveyor } from "./TrashConveyor";
 
 export class RuleEnforcer {

@@ -61,4 +61,13 @@ export const manual: Manual = {
  * anything, but... BLIND PEOPLE 😂😂🤣🤣🤣
  */`,
 
+	"l33t":
+`l33t message
+/**
+ * Convert a string to l33t 5p34k.
+ * @param message: <String> The string to convert.
+ * @flag --decode Decode a l33t 5tr1n6.
+ * @example ${config.prefix}l33t kek get rekt noob
+ */`,
+
 }

@@ -80,6 +80,7 @@ export class CommandHandler {
 		let cmd = args.splice(0, 1)[0];
 		let flags = FlagParser.parseFlags(args);
 		Logger.debugln("Command parsed:");
+		Logger.debugln("\tinvocator: " + msg.author.tag);
 		Logger.debugln("\tcmd: " + cmd);
 		Logger.debug("\tflags: "); Logger.debugln(flags);
 		Logger.debug("\targs: "); Logger.debugln(args);

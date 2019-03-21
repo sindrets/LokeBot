@@ -1,6 +1,6 @@
 import { CommandHandler } from "CommandHandler";
 import LokeBot from "LokeBot";
-import { Utils } from "Utils";
+import { Utils } from "misc/Utils";
 import { Rules } from "Rules";
 
 export function init(ch: CommandHandler, bot: LokeBot) {

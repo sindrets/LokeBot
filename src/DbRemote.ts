@@ -5,7 +5,7 @@ import auth from "./auth.json";
 import { BotEvent } from "./Constants.js";
 import { EventHandler } from "./EventHandler.js";
 import { LokerStatDoc, LokerStateDoc } from "./Interfaces.js";
-import { Utils } from "./Utils.js";
+import { Utils } from "./misc/Utils.js";
 import { Logger } from "Logger.js";
 
 export class DbRemote {

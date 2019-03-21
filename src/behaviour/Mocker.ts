@@ -1,7 +1,7 @@
 import { Message, TextChannel } from "discord.js";
 import LokeBot from "LokeBot";
 import { Rules } from "Rules";
-import { Utils } from "Utils";
+import { Utils } from "misc/Utils";
 
 export function init(bot: LokeBot) {
 
