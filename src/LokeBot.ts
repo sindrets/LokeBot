@@ -183,7 +183,7 @@ export default class LokeBot {
 			if (!member.user.bot) {
 				let loker = this.userMap.get(member.user);
 				if (loker == undefined) {
-					this.userMap.set(member.user, {user: member.user, status: false, guilds: [member.guild]});
+					this.userMap.set(member.user, {user: member.user, status: true, guilds: [member.guild]});
 				} else {
 					loker.guilds.push(member.guild);
 				}

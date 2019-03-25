@@ -283,7 +283,7 @@ export class DbRemote {
 		if (this.dbClient) {
 			return this.dbClient.close();
 		}
-		return new Promise((resolve, reject) => { resolve() });
+		return new Promise<void>((resolve, reject) => { resolve() });
 	}
 	
 }
