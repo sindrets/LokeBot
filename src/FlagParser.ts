@@ -44,7 +44,7 @@ export class FlagParser extends Map<string,string> {
      * The arg `--foo="bar baz"` will be parsed as the flag:
      * - foo: "bar baz"
      */
-    public static parseFlags(args: string[]): FlagParser {
+    public static parseFlags(args: string[], unquoteArgs=true): FlagParser {
 
         let result: FlagParser = new FlagParser();
         let offset = 0;
@@ -54,7 +54,7 @@ export class FlagParser extends Map<string,string> {
             if (arg.substr(0, 2) == "--") {
                 let value: string = "";
                 let identifier = arg.substring(2);
-                let match = identifier.match(/((\=(["'])(?:(?=(\\?))\4.)*?\3)|(\=[^\s]*))/gm);
+                let match = identifier.match(/((\=(["'`])(?:(?=(\\?))\4.)*?\3)|(\=[^\s]*))/gm);
                 if (match) {
                     value = Utils.unquote(match[0].substr(1, match[0].length-1));
                     identifier = arg.substring(2, arg.indexOf("="));
@@ -62,6 +62,7 @@ export class FlagParser extends Map<string,string> {
                 else value = "true";
                 result.set(identifier, value);
 
+                // remove flag from input array
                 args.splice(index - offset, 1);
                 offset++;
             }
@@ -74,6 +75,12 @@ export class FlagParser extends Map<string,string> {
 
                 args.splice(index - offset, 1);
                 offset++;
+            }
+            else {
+                // unquote the arg
+                if (unquoteArgs) {
+                    args[index - offset] = Utils.unquote(args[index - offset]);
+                }
             }
             
         })

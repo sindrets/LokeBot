@@ -1,10 +1,22 @@
-import { Logger } from "Logger";
+// set custom import paths
+process.env.NODE_PATH = require("path").resolve(__dirname, "..");
+require("module").Module._initPaths();
 
-if (process.argv.length < 3) {
-	Logger.println("No test was specified!");
-} else {
-	process.argv.forEach((value, index, args) => {
-		if (index >= 2)
-			require("./" + value);
-	})
+import { Logger } from "Logger";
+import { FlagParser } from "FlagParser";
+
+export class TestRunner {
+
+	constructor(args: string[], flags: FlagParser) {
+
+		if (args.length < 1) {
+			Logger.println("No test was specified!");
+		} else {
+			args.forEach((value, index, args) => {
+				require("./" + value);
+			})
+		}
+		
+	}
+	
 }

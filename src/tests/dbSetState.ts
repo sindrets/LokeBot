@@ -8,7 +8,7 @@ EventHandler.on([BotEvent.BOT_READY, BotEvent.CONNECTED], () => {
 
     let greg = bot.queryUsers("greg");
     if (greg) {
-        bot.dbRemote.setStateSingle(greg.user.tag, false, (err, result) => {
+        bot.dbRemote.setStateSingle(greg.user, false, (err, result) => {
             Logger.println(err);
             Logger.println(result);
         })

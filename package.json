@@ -1,11 +1,11 @@
 {
   "name": "loke-bot",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "",
   "main": "out/Main.js",
   "scripts": {
     "start": "node out/Main.js",
-    "test": "node out/tests/testRunner.js",
+    "test": "node out/Main.js --debug --test",
     "debug": "node out/Main.js --debug --user=debugger",
     "gen-docs": "typedoc --out docs src"
   },

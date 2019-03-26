@@ -37,15 +37,9 @@ export default class LokeBot {
 	public commandHandler: CommandHandler;
 	public ruleEnforcer: RuleEnforcer;
 
-	constructor(flags?: FlagParser) {
+	constructor(args?: string[], flags?: FlagParser) {
 
 		if (flags) {
-
-			if (flags.isTrue("debug")) {
-				LokeBot.DEBUG_MODE = true;
-				Logger.debugln("Running in debug mode!");
-				Logger.debugln("flags: " + flags);
-			}
 
 			let user = flags.get("user");
 			switch (user) {
@@ -466,7 +460,7 @@ export default class LokeBot {
 
 		let displayName = user.username;
 		if (channel && channel instanceof TextChannel) {
-			let member = this.queryUsers(user.tag, channel.guild, true);
+			let member = this.queryUsers(user.id, channel.guild, true);
 			if (member) displayName = member.displayName;
 		}
 		
@@ -487,8 +481,9 @@ export default class LokeBot {
 	/**
 	 * Query all users by user tag, or nickname and return a user if a
 	 * match is found.
-	 * @param query A string that partially matches the user tag, or
-	 * nickname (can be nickname from any guild LokeBot is member)
+	 * @param query A string that partially matches the user tag, 
+	 * nickname, or if strict: user id. (Can be nickname from any guild 
+	 * LokeBot is member).
 	 * @param strict If strict: query must be an exact, case-sensitive
 	 * match of either user tag, or nickname
 	 */
@@ -508,6 +503,8 @@ export default class LokeBot {
 		let result: Loker | GuildMember | null = null;
 		let strictFlag: boolean = strict;
 
+		if (query.length == 0) return null;
+
 		let match = (member: GuildMember): boolean => {
 			if (!strictFlag) {
 				if (member.nickname && member.nickname.toLowerCase().indexOf(query.toLowerCase()) != -1) {
@@ -517,12 +514,9 @@ export default class LokeBot {
 					return true;
 				}
 			} else {
-				if (member.nickname == query) {
-					return true;
-				}
-				else if (member.user.tag == query) {
-					return true;
-				}
+				if (member.user.id == query) return true;
+				else if (member.nickname == query) return true;
+				else if (member.user.tag == query) return true;
 			}
 
 			return false;
@@ -563,7 +557,8 @@ export default class LokeBot {
 
 	/**
 	 * 
-	 * @param query A string that partially matches the guild name
+	 * @param query A string that partially matches the guild name, or
+	 * if strict: guild id.
 	 * @param strict If strict: query must be an exact match
 	 */
 	public queryGuilds(query: string, strict=false): Guild | null {
@@ -575,7 +570,9 @@ export default class LokeBot {
 				if (guild.name.toLowerCase().indexOf(query.toLowerCase()) != -1)
 					result = guild;
 			} else {
-				if (guild.name == query)
+				if (guild.id == query)
+					result = guild;
+				else if (guild.name == query)
 					result = guild;
 			}
 		})

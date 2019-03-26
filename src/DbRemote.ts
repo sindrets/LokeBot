@@ -1,12 +1,13 @@
 import assert from "assert";
-import { Collection, Db, InsertOneWriteOpResult, MongoClient, MongoError, UpdateWriteOpResult } from "mongodb";
+import { User } from "discord.js";
+import { Logger } from "Logger.js";
+import { Collection, Db, InsertOneWriteOpResult, MongoClient, MongoError, ReplaceWriteOpResult, UpdateWriteOpResult } from "mongodb";
 import { sprintf } from "sprintf-js";
 import auth from "./auth.json";
 import { BotEvent } from "./Constants.js";
 import { EventHandler } from "./EventHandler.js";
-import { LokerStatDoc, LokerStateDoc } from "./Interfaces.js";
+import { LokerStatDoc } from "./Interfaces.js";
 import { Utils } from "./misc/Utils.js";
-import { Logger } from "Logger.js";
 
 export class DbRemote {
 
@@ -16,7 +17,6 @@ export class DbRemote {
 	private dbClient: MongoClient | undefined;
 	private db: Db | undefined;
 	private lokeStats: Collection | undefined;
-	private lokeState: Collection | undefined;
 	private quotes: Collection | undefined;
 	private connected: boolean = false;
 
@@ -37,7 +37,6 @@ export class DbRemote {
 			this.dbClient = dbClient;
 			this.db = dbClient.db(this.dbName);
 			this.lokeStats = this.db.collection("lokeStats");
-			this.lokeState = this.db.collection("lokeStatus");
 			this.quotes = this.db.collection("quotes");
 			this.connected = true;
 			EventHandler.trigger(BotEvent.CONNECTED, true);
@@ -46,42 +45,68 @@ export class DbRemote {
 
 	/**
 	 * Insert a LokerStatDoc document for a single user.
-	 * @param userTag 
+	 * @param user 
 	 * @param callback 
 	 */
-	public insertLokerSingle(userTag: string, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void): void {
+	public insertLokerSingle(user: User, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void): void
+	/**
+	 * Insert a LokerStatDoc document for a single user.
+	 * @param user
+	 * @param state Loke state 
+	 * @param callback 
+	 */
+	public insertLokerSingle(user: User, state: boolean, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void): void
+	public insertLokerSingle(user: User, callbackOrState: boolean | Function | unknown, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void): void {
+
 		if (this.lokeStats) {
-			this.lokeStats.insertOne({ user: userTag, meanderDays: [] }, (err, result) => {
-				if (callback) callback(err, result);
+
+			let flag = typeof callbackOrState == "boolean" ? callbackOrState : false;
+			let listener = typeof callbackOrState == "function" ? callbackOrState : callback;
+
+			this.lokeStats.insertOne({uid: user.id, user: user.tag, state: flag, meanderDays: [] } as LokerStatDoc, (err, result) => {
+				if (listener) listener(err, result);
 			});
 		}
+
 	}
 
 	/**
-	 * Insert a LokerStateDoc document for a single user.
-	 * @param userTag 
-	 * @param state 
+	 * Update a document for a single user.
+	 * @param uid User id.
+	 * @param doc 
 	 * @param callback 
 	 */
-	public insertStateSingle(userTag: string, state: boolean, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void): void {
+	public updateLokerSingle(uid: string, doc: LokerStatDoc, callback?: (err: MongoError, result: ReplaceWriteOpResult) => void): void
+	/**
+	 * Update a document for a single user.
+	 * @param user 
+	 * @param doc 
+	 * @param callback 
+	 */
+	public updateLokerSingle(user: User, doc: LokerStatDoc, callback?: (err: MongoError, result: ReplaceWriteOpResult) => void): void
+	public updateLokerSingle(userOrUid: User | string, doc: LokerStatDoc, callback?: (err: MongoError, result: ReplaceWriteOpResult) => void): void {
 		
-		if (this.lokeState) {
-			this.lokeState.insertOne({ user: userTag, state: state }, (err, result) => {
-				if (callback) callback(err, result);
-			})
-		}
+		if (this.lokeStats) {
 
+			let id = typeof userOrUid == "string" ? userOrUid : userOrUid.id;
+
+			this.lokeStats.replaceOne({ uid: id }, doc, (err, result) => {
+				if (callback) callback(err, result);
+			});
+			
+		}
+		
 	}
 
 	/**
 	 * Get loke-stats for a single user.
-	 * @param userTag 
+	 * @param user 
 	 * @param callback 
 	 * @param sortDates If true: sort dates in a descending order.
 	 */
-	public getStatsSingle(userTag: string, callback?: (doc: LokerStatDoc | null, err: MongoError) => void, sortDates=false): void {
+	public getStatsSingle(user: User, callback?: (doc: LokerStatDoc | null, err: MongoError) => void, sortDates=false): void {
 		if (this.lokeStats) {
-			this.lokeStats.findOne({ user: userTag }, (err, doc) => {
+			this.lokeStats.findOne({ uid: user.id }, (err, doc) => {
 				if (doc && sortDates) {
 					// sort dates descending
 					(doc as LokerStatDoc).meanderDays.sort((a,b) => {
@@ -119,37 +144,8 @@ export class DbRemote {
 	}
 
 	/**
-	 * Get loke-state of a single user.
-	 * @param userTag 
-	 * @param callback 
-	 */
-	public getStateSingle(userTag: string, callback?: (doc: LokerStateDoc | null, err: MongoError) => void): void {
-		
-		if (this.lokeState) {
-			this.lokeState.findOne({ user: userTag }, (err, doc) => {
-				if (callback) callback(doc, err);
-			});
-		}
-		
-	}
-
-	/**
-	 * Get loke-state of all users.
-	 * @param callback 
-	 */
-	public getStateAll(callback?: (docs: LokerStateDoc[] | null, err: MongoError) => void): void {
-		
-		if (this.lokeState) {
-			this.lokeState.find().toArray((err, doc) => {
-				if (callback) callback(doc, err);
-			});
-		}
-		
-	}
-
-	/**
 	 * Get loke-stats for one user during a specified period.
-	 * @param userTag 
+	 * @param user 
 	 * @param period The period length
 	 * @param isoIndex An ISO 8601 period index such that:
 	 *  - 1 = Monday / January / AD 1
@@ -158,9 +154,9 @@ export class DbRemote {
 	 * For details on the ISO date format: https://en.wikipedia.org/wiki/ISO_8601
 	 * @param callback 
 	 */
-	public getStatsPeriodSingle(userTag: string, period: "year" | "month" | "week", isoIndex: number, callback: (doc: LokerStatDoc | null, err: MongoError) => void): void {
+	public getStatsPeriodSingle(user: User, period: "year" | "month" | "week", isoIndex: number, callback: (doc: LokerStatDoc | null, err: MongoError) => void): void {
 		
-		this.getStatsSingle(userTag, (doc, err) => {
+		this.getStatsSingle(user, (doc, err) => {
 			if (doc) {
 				doc.meanderDays = Utils.getDatesInPeriod(doc.meanderDays, period, isoIndex);
 				callback(doc, err);
@@ -196,25 +192,26 @@ export class DbRemote {
 
 	/**
 	 * Add a loke-day to a single user.
-	 * @param userTag 
+	 * @param user 
 	 * @param date 
 	 * @param callback 
 	 */
-	public addDaySingle(userTag: string, date?: Date, callback?: (err: MongoError, result: UpdateWriteOpResult | null) => void): void {
-		this.getStatsSingle(userTag, (doc, err) => {
+	public addDaySingle(user: User, date?: Date, callback?: (err: MongoError, result: UpdateWriteOpResult | null) => void): void {
+		this.getStatsSingle(user, (doc, err) => {
 			if (err != null) {
 				if (callback) callback(err, null);
 				return; // prevent infinite recursion 
 			}
 			if (!doc) {
-				this.insertLokerSingle(userTag, (result) => {
-					this.addDaySingle(userTag, date, callback);
+				this.insertLokerSingle(user, (result) => {
+					this.addDaySingle(user, date, callback);
 				});
 				return;
 			} else if (this.lokeStats) {
 				if (date == undefined) date = new Date();
 				doc.meanderDays.push(date);
-				this.lokeStats.replaceOne( { user: userTag }, doc, (err, result) => {
+				doc.user = user.tag;
+				this.updateLokerSingle(user, doc, (err, result) => {
 					if (callback) callback(err, result);
 				});
 			}
@@ -223,21 +220,22 @@ export class DbRemote {
 
 	/**
 	 * Set loke-state for a single user. 
-	 * @param userTag 
+	 * @param user 
 	 * @param state True if the user is to be marked as Loker
 	 * @param callback 
 	 */
-	public setStateSingle(userTag: string, state: boolean, callback?: (err: MongoError, result: UpdateWriteOpResult | InsertOneWriteOpResult) => void): void {
+	public setStateSingle(user: User, state: boolean, callback?: (err: MongoError, result: UpdateWriteOpResult | InsertOneWriteOpResult) => void): void {
 		
-		this.getStateSingle(userTag, doc => {
+		this.getStatsSingle(user, doc => {
 			
 			if (!doc) {
-				this.insertStateSingle(userTag, state, (err, result) => {
+				this.insertLokerSingle(user, state, (err, result) => {
 					if (callback) callback(err, result);
 				});
-			} else if (this.lokeState) {
+			} else if (this.lokeStats) {
 				doc.state = state;
-				this.lokeState.replaceOne({ user: userTag }, doc, (err, result) => {
+				doc.user = user.tag;
+				this.updateLokerSingle(user, doc, (err, result) => {
 					if (callback) callback(err, result);
 				});
 			}
@@ -253,12 +251,12 @@ export class DbRemote {
 	 */
 	public setStateAll(state: boolean, callback?: (err: MongoError, result: UpdateWriteOpResult) => void): void {
 		
-		this.getStateAll(docs => {
+		this.getStatsAll(docs => {
 
 			if (docs) {
 				docs.forEach(doc => {
 					doc.state = state;
-					if (this.lokeState) this.lokeState.replaceOne({ user: doc.user }, doc, (err, result) => {
+					if (this.lokeStats) this.updateLokerSingle(doc.uid, doc, (err, result) => {
 						if (callback) callback(err, result);
 					})
 				})

@@ -14,7 +14,6 @@ export function init(ch: CommandHandler, bot: LokeBot) {
      */
     ch.addCommand("stats", (msg, flags, args) => {
 
-        let tag = msg.author.tag;
         let name = msg.member ? msg.member.displayName : msg.author.username;
         let target: User = msg.author;
         let guild: Guild | undefined = msg.guild;
@@ -25,7 +24,6 @@ export function init(ch: CommandHandler, bot: LokeBot) {
             let member = bot.queryUsers(args[0], guild);
             if (member) {
                 target = member.user;
-                tag = target.tag;
                 if (member instanceof GuildMember)
                     name = member.displayName;
                 else name = target.username;
@@ -69,7 +67,7 @@ export function init(ch: CommandHandler, bot: LokeBot) {
             ]
         });
 
-        bot.dbRemote.getStatsSingle(tag, doc => {
+        bot.dbRemote.getStatsSingle(target, doc => {
 
             if (doc && embed.fields != undefined) {
 

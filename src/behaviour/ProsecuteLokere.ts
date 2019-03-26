@@ -19,7 +19,7 @@ export function init(bot: LokeBot) {
 
 		Logger.info("Prosecuting lokere...");
 
-		bot.dbRemote.getStateAll(docs => {
+		bot.dbRemote.getStatsAll(docs => {
 
 			// map out all guilty users from each guild and add Loker role 
 			// on all the users' guilds. Register day in database.
@@ -30,7 +30,7 @@ export function init(bot: LokeBot) {
 
 				let dbState = loker.status;
 				dbStates.slice(0).some((doc, i) => {
-					if (doc.user == loker.user.tag) {
+					if (doc.uid == loker.user.id) {
 						dbState = doc.state;
 						dbStates.splice(i, 1);
 						return true;
@@ -52,7 +52,7 @@ export function init(bot: LokeBot) {
 							member.addRole(role);
 						})
 						// Register a new loke-day in the database
-						bot.dbRemote.addDaySingle(member.user.tag);
+						bot.dbRemote.addDaySingle(member.user);
 					}
 	
 				})

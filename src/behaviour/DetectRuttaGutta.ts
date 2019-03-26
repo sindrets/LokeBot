@@ -18,11 +18,11 @@ export function init(bot: LokeBot) {
 
 			// ensure that it's not a weekend.
 			if (active && [6,7].indexOf(t.isoWeekday()) == -1) {
-				bot.dbRemote.getStateSingle(loker.user.tag, doc => {
+				bot.dbRemote.getStatsSingle(loker.user, doc => {
 					
 					if ( (doc && doc.state && loker) || (!doc && loker) ) {
 						loker.status = false;
-						bot.dbRemote.setStateSingle(loker.user.tag, false);
+						bot.dbRemote.setStateSingle(loker.user, false);
 
 						let sList: string[] = [
 							"Sjekk hvem som er rutta! Det er %s!",
@@ -36,7 +36,7 @@ export function init(bot: LokeBot) {
 						loker.guilds.forEach(guild => {
 							bot.getRuttaRole(guild).then(role => {
 								if (loker) {
-									let member = bot.queryUsers(loker.user.tag, guild, true);
+									let member = bot.queryUsers(loker.user.id, guild, true);
 									if (member) member.addRole(role);
 								}
 							})

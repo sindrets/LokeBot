@@ -11,19 +11,11 @@ export interface Loker {
 }
 
 export interface LokerStatDoc {
-    _id: string,
+    _id?: string,
     /**
-     * Discord user tag.
+     * Discord user id.
      */
-    user: string,
-    /**
-     * An array of all registered loke-days. 
-     */
-	meanderDays: Date[]
-}
-
-export interface LokerStateDoc {
-    _id: string,
+    uid: string,
     /**
      * Discord user tag.
      */
@@ -32,7 +24,11 @@ export interface LokerStateDoc {
      * Determines whether or not this user is a Loker. Its value is
      * evaluated on Config.periodEnd each day. 
      */
-    state: boolean
+    state: boolean,
+    /**
+     * An array of all registered loke-days. 
+     */
+	meanderDays: Date[]
 }
 
 export type EventListener = {
