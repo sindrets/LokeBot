@@ -382,7 +382,7 @@ export default class LokeBot {
 
 		let result = null;
 		this.iterateLokere(loker => {
-			if (loker.user.id == id)
+			if (loker.user.id === id)
 				result = loker;
 		});
 		return result;
@@ -453,12 +453,50 @@ export default class LokeBot {
 		
 	}
 
+	public getDisplayName(userQuery: string | User | Loker, guildQuery?: string | Guild): string | null {
+		
+		let guild: Guild | null = null;
+		if (typeof guildQuery == "string") {
+			guild = this.queryGuilds(guildQuery);
+			if (!guild) return null;
+		}
+		else if (guildQuery instanceof Guild) {
+			guild = guildQuery;
+		}
+
+		if (guild) {
+			let member: GuildMember | null = null;
+			if (typeof userQuery == "string") {
+				member = this.queryUsers(userQuery, guild);
+			}
+			else if (userQuery instanceof User) {
+				member = this.queryUsers(userQuery.id, guild);
+			}
+			else {
+				member = this.queryUsers(userQuery.user.id, guild);
+			}
+	
+			if (!member) return null;
+			return member.displayName;
+		}
+		else {
+			if (userQuery instanceof User) return userQuery.username;
+			if (typeof userQuery == "string") {
+				let loker = this.queryUsers(userQuery);
+				if (loker) return loker.user.username;
+				else return null;
+			}
+			else return userQuery.user.username;
+		}
+		
+	}
+
 	/**
 	 * Query all users by user tag, or nickname and return a user if a
 	 * match is found.
 	 * @param query A string that partially matches the user tag, 
-	 * nickname, or if strict: user id. (Can be nickname from any guild 
-	 * LokeBot is member).
+	 * nickname (Can be nickname from any guild LokeBot is member), or 
+	 * user id.
 	 * @param strict If strict: query must be an exact, case-sensitive
 	 * match of either user tag, or nickname
 	 */
@@ -466,8 +504,8 @@ export default class LokeBot {
 	/**
 	 * Query all users of a specified guild by user tag, or nickname and
 	 * return a user if a match is found.
-	 * @param query A string that partially matches the user tag, or
-	 * nickname (the nickname used in the specified guild).
+	 * @param query A string that partially matches the user tag, 
+	 * nickname (the nickname used in the specified guild), or user id.
 	 * @param guild The guild to be queried
 	 * @param strict If strict: query must be an exact, case-sensitive
 	 * match of either user tag, or nickname
@@ -482,16 +520,13 @@ export default class LokeBot {
 
 		let match = (member: GuildMember): boolean => {
 			if (!strictFlag) {
-				if (member.nickname && member.nickname.toLowerCase().indexOf(query.toLowerCase()) != -1) {
-					return true;
-				}
-				else if (member.user.tag.toLowerCase().indexOf(query.toLowerCase()) != -1) {
-					return true;
-				}
+				if (member.user.id === query) return true;
+				if (member.nickname && member.nickname.toLowerCase().indexOf(query.toLowerCase()) != -1) return true;
+				if (member.user.tag.toLowerCase().indexOf(query.toLowerCase()) != -1) return true;
 			} else {
-				if (member.user.id == query) return true;
-				else if (member.nickname == query) return true;
-				else if (member.user.tag == query) return true;
+				if (member.user.id === query) return true;
+				if (member.nickname == query) return true;
+				if (member.user.tag == query) return true;
 			}
 
 			return false;

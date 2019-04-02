@@ -1,4 +1,4 @@
-import moment = require("moment");
+import moment = require("moment-timezone");
 import { Logger } from "Logger";
 
 export class Utils {
@@ -151,6 +151,23 @@ export class Utils {
 		
 	}
 
+	public static getDatesInLast(amount: number, unit: UnitOfTime, dates: Date[]): Date[] {
+		
+		let result: Date[] = [];
+
+		let now = moment().utc();
+		let then = now.clone().subtract(amount, unit);
+		
+		dates.forEach(date => {
+			if (moment(date).isBetween(then, now)) {
+				result.push(date);
+			}
+		})
+
+		return result;
+		
+	}
+
 	public static mockifyString(text: string): string {
 
 		let s = text.split("");
@@ -188,3 +205,5 @@ export class Utils {
 	}
 	
 }
+
+type UnitOfTime = "year" | "years" | "y" | "month" | "months" | "M" | "week" | "weeks" | "w" | "day" | "days" | "d" | "hour" | "hours" | "h" | "minute" | "minutes" | "m" | "second" | "seconds" | "s";

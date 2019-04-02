@@ -196,6 +196,10 @@ export function scheduleJobUtc(name: string, interval: JobSpec | string, utcOrTz
 
 }
 
+export function getTimezoneOffset(timezone: string): number {
+    return moment.utc().tz(timezone).utcOffset();
+}
+
 export function printNextInvocations(): void {
 
     for (let job in schedule.scheduledJobs) {
