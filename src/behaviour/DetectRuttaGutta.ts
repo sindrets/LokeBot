@@ -1,7 +1,7 @@
 import config from "config.json";
 import LokeBot from "LokeBot";
 import { sprintf } from "sprintf-js";
-import moment = require("moment");
+import moment = require("moment-timezone");
 
 export function init(bot: LokeBot) {
 
@@ -13,7 +13,7 @@ export function init(bot: LokeBot) {
 		if (msg.guild && loker && loker.status) {
 
 			let format: string = "hh:mm";
-			let t = moment.utc().add(config.utcTimezone, "hours");
+			let t = moment.utc().tz(config.timezone || moment.tz.guess());
 			let active: boolean = t.isBetween(moment(config.periodStart, format), moment(config.periodEnd, format));
 
 			// ensure that it's not a weekend.

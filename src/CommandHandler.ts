@@ -75,10 +75,10 @@ export class CommandHandler {
 		// ensure that command starts with prefix
 		if (content.substring(0, config.prefix.length) != config.prefix) return;
 
-		let args = content.substr(config.prefix.length).match(/(?!\s)([^"'`\s]*)(=?(["'`])(?:(?=(\\?))\4.)*?\3)?/g) || [""];
+		let args = content.substr(config.prefix.length).match(/(?!\s)(?:[^"'`\s]*)(?:(["'`])(?:(?=(\\?))\2.)*?\1)?/g) || [""];
 		if (args.length > 1) args.pop(); // remove empty string from regex match
 		let cmd = args.splice(0, 1)[0];
-		let flags = FlagParser.parseFlags(args);
+		let flags = FlagParser.parse(args);
 		Logger.debugln("Command parsed:");
 		Logger.debugln("\tinvocator: " + msg.author.tag);
 		Logger.debugln("\tcmd: " + cmd);

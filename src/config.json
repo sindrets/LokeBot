@@ -1,6 +1,6 @@
 {
     "prefix": "#!",
-    "utcTimezone": 1,
+    "timezone": "Europe/Oslo",
     "periodStart": "06:00",
     "periodEnd": "12:00"
 }

@@ -3,17 +3,18 @@ import { Guild, GuildMember } from 'discord.js';
 import LokeBot from "LokeBot";
 import moment from 'moment';
 import { Logger } from "Logger";
+import { scheduleJobUtc, printNextInvocations } from "misc/ScheduleJobUtc";
 
 export function init(bot: LokeBot) {
 
     // all users who are still marked as Loker at periodEnd, gets the 
 	// Loker role.
-	bot.scheduleJobUtc("Prosecute Lokere", { hour: parseInt(config.periodEnd), minute: 0, second: 0 }, config.utcTimezone, () => {
+	scheduleJobUtc("Prosecute Lokere", { hour: parseInt(config.periodEnd), minute: 0, second: 0 }, config.timezone, () => {
 		
 		// ignore saturdays and sundays.
 		let now = moment().utc().isoWeekday();
 		if (now == 6 || now == 7) {
-			bot.logNextInvocations();
+			printNextInvocations();
 			return;
 		}
 
@@ -78,7 +79,7 @@ export function init(bot: LokeBot) {
 				}
 			})
 	
-			bot.logNextInvocations();
+			printNextInvocations();
 			
 		})
 

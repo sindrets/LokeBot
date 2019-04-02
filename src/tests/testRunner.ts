@@ -1,18 +1,14 @@
-// set custom import paths
-process.env.NODE_PATH = require("path").resolve(__dirname, "..");
-require("module").Module._initPaths();
-
 import { Logger } from "Logger";
-import { FlagParser } from "FlagParser";
+import { Globals } from "Globals";
 
 export class TestRunner {
 
-	constructor(args: string[], flags: FlagParser) {
+	constructor() {
 
-		if (args.length < 1) {
+		if (Globals.args.length < 1) {
 			Logger.println("No test was specified!");
 		} else {
-			args.forEach((value, index, args) => {
+			Globals.args.forEach((value, index, args) => {
 				require("./" + value);
 			})
 		}

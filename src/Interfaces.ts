@@ -48,8 +48,13 @@ export interface OnceEventListenerDict {
     }
 }
 
-export interface IndexedLokeBot extends LokeBot {
-	[key: string]: any;
+export interface CronFields {
+    second: number[],
+    minute: number[],
+    hour: number[],
+    dayOfMonth: number[],
+    month: number[],
+    dayOfWeek: number[]
 }
 
 export interface GelbooruSpec {

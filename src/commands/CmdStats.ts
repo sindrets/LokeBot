@@ -17,7 +17,7 @@ export function init(ch: CommandHandler, bot: LokeBot) {
         let name = msg.member ? msg.member.displayName : msg.author.username;
         let target: User = msg.author;
         let guild: Guild | undefined = msg.guild;
-        let now = moment.utc();
+        let now = moment.utc().tz(config.timezone || moment.tz.guess());
 
         // @param arg[0] user query.
         if (args[0] != undefined) {
@@ -84,7 +84,7 @@ export function init(ch: CommandHandler, bot: LokeBot) {
                     let s = "\n```";
                     s += "\n["
                     doc.meanderDays.forEach((date, index, c) => {
-                        let t = moment(date).utc().utcOffset(config.utcTimezone);
+                        let t = moment(date).utc().tz(config.timezone || moment.tz.guess());
                         s += "\n  " + t.toString();
                     })
                     s += "\n]";
@@ -96,7 +96,7 @@ export function init(ch: CommandHandler, bot: LokeBot) {
 
                     let s = "\n```";
                     doc.meanderDays.some((date, index) => {
-                        let t = moment(date).utc().utcOffset(config.utcTimezone);
+                        let t = moment(date).utc().tz(config.timezone || moment.tz.guess());
                         s += "\n" + t.toString();
                         return index >= 4;
                     })

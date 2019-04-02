@@ -3,16 +3,30 @@ import { Utils } from "misc/Utils";
 export class FlagParser extends Map<string,string> {
 
     /**
-     * Retrieves the value of the given flag and returns true if the
-     * value is equal to the string "true" (case-insensitive).
+     * Retrieves the values of the given flags and returns true if one
+     * of the values is equal to the string "true" (case-insensitive).
      * Otherwise: false.
-     * @param flag 
+     * @param flags 
+     * @param strict If strict: all given flags must be true.
      */
-    public isTrue(flag: string): boolean {
+    public isTrue(flags: string | string[], strict=false): boolean {
 
-        let f = this.get(flag);
-        return f ? f.toLowerCase() == "true" : false;
+        let result = false;
+        if (typeof flags == "string") flags = [flags];
+
+        flags.some(flag => {
+            let f = this.get(flag);
+            let value = f ? f.toLowerCase() == "true" : false;
+
+            if (strict && !value) {
+                result = false;
+                return true;
+            }
+            return (result = value) && !strict;
+        })
         
+        return result;
+
     }
 
     public toString(): string {
@@ -25,14 +39,15 @@ export class FlagParser extends Map<string,string> {
             result += `,${sep}'${key}' => '${this.get(key)}'`;
         }
         
-        return `[Map] { ${result.substr(2)} }`;
+        return `[FlagParser] { ${result.substr(2)} }`;
         
     }
 
     /**
      * Parses an array of args and picks out flags prefixed with either
      * "-" or "--". The parsed flags are then removed from the input
-     * array. 
+     * array. A FlagParser object is then returned witht he flags
+     * alongside their values.
      * @param args The arg `-Syu` will be parsed as the three flags:
      * - S: "true"
      * - y: "true"
@@ -44,7 +59,7 @@ export class FlagParser extends Map<string,string> {
      * The arg `--foo="bar baz"` will be parsed as the flag:
      * - foo: "bar baz"
      */
-    public static parseFlags(args: string[], unquoteArgs=true): FlagParser {
+    public static parse(args: string[], unquoteArgs=true): FlagParser {
 
         let result: FlagParser = new FlagParser();
         let offset = 0;
@@ -54,9 +69,9 @@ export class FlagParser extends Map<string,string> {
             if (arg.substr(0, 2) == "--") {
                 let value: string = "";
                 let identifier = arg.substring(2);
-                let match = identifier.match(/((\=(["'`])(?:(?=(\\?))\4.)*?\3)|(\=[^\s]*))/gm);
+                let match = identifier.match(/((?<=\S\=)(["'`])(?:(?=(\\?))\3.)*?\2)|((?<=\S\=)[^\s]*)/gm);
                 if (match) {
-                    value = Utils.unquote(match[0].substr(1, match[0].length-1));
+                    value = Utils.unquote(match[0]);
                     identifier = arg.substring(2, arg.indexOf("="));
                 }
                 else value = "true";

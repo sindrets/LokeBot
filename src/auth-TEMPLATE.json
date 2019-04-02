@@ -1,0 +1,13 @@
+{
+	"TOKEN": "discord bot token",
+	"DEBUG_TOKEN": "discord bot token: used if the flag --user=debugger is provided",
+	"DB_U": "database username",
+	"DB_P": "database password",
+	"DB_NAME": "database name",
+	"SRV_ADDRESS": "srv address with `%s` as a placeholders for username and password respectively",
+	"GELBOORU_API_KEY": "gelbooru api key",
+	"GELBOORU_USER_ID": "gelbooru user id",
+	"DEV_ADMINS": [
+		"an array of discord user id's. The specified users are given special permissions, such as the ability to run the `eval` command."
+	]
+}

@@ -1,6 +1,7 @@
 import LokeBot from "LokeBot";
 import getCursorPos from "get-cursor-position";
 import chalk from "chalk";
+import { Globals } from "Globals";
 
 export class Logger {
 
@@ -9,7 +10,7 @@ export class Logger {
      * @param message 
      */
     public static debug(message?: any): void {
-        if (LokeBot.DEBUG_MODE) {
+        if (Globals.DEBUG_MODE) {
             let pos = getCursorPos.sync();
             if (pos.col == 1) process.stdout.write(chalk.yellow("DEBUGGER: "));
             process.stdout.write(message);
@@ -23,7 +24,7 @@ export class Logger {
      * @param optionalParams 
      */
     public static debugln(message?: any, ...optionalParams: any[]): void {
-        if (LokeBot.DEBUG_MODE) {
+        if (Globals.DEBUG_MODE) {
             let pos = getCursorPos.sync();
             if (pos.col == 1) process.stdout.write(chalk.yellow("DEBUGGER: "));
             console.log(message, ...optionalParams);
@@ -80,7 +81,7 @@ export class Logger {
      * @param optionalParams 
      */
     public static error(message?: any, ...optionalParams: any[]): void {
-        console.error(message, ...optionalParams);
+        console.error(chalk.red(message), ...optionalParams);
     }
 
 }

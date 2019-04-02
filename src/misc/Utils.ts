@@ -167,16 +167,24 @@ export class Utils {
 	}
 
 	/**
-	 * Strips leading and trailing quotes.
+	 * Strips leading and trailing quotes if they are of the same pair.
 	 * @param text 
 	 */
 	public static unquote(text: string): string {
 		let result = text;
-		let match = text.match(/((^(?!\\)["'])(.*)((?<!\\)\2$))/g);
+		let match = text.match(/^(["'`])(?:(?=(\\?))\2.(?!\1.))*?\1$/g);
 		if (match) {
 			result = match[0].substr(1, match[0].length-2);
 		}
 		return result;
+	}
+
+	public static isYes(s: string, def=false): boolean {
+		if (s.trim().match(/^(y|yes)$/gi) != null)
+			return true;
+		if (s.trim().match(/^(n|no)$/gi) != null)
+			return false;
+		return def;
 	}
 	
 }

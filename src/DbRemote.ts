@@ -28,19 +28,32 @@ export class DbRemote {
 	/**
 	 * Connect to the database and fetch relevant collections.
 	 */
-	public connect(): void {
-		MongoClient.connect(this.uri, {useNewUrlParser: true}, (err, dbClient) => {
-			assert.strictEqual(err, null);
-			if (err) Logger.error(err.errmsg);
-			Logger.success("Successfully connected to the database!");
+	public async connect(): Promise<Db> {
 
-			this.dbClient = dbClient;
-			this.db = dbClient.db(this.dbName);
-			this.lokeStats = this.db.collection("lokeStats");
-			this.quotes = this.db.collection("quotes");
-			this.connected = true;
-			EventHandler.trigger(BotEvent.CONNECTED, true);
-		});
+		return new Promise((resolve, reject) => {
+
+			MongoClient.connect(this.uri, {useNewUrlParser: true}, (err, dbClient) => {
+
+				// assert.strictEqual(err, null);
+				if (err) {
+					Logger.error(err.errmsg);
+					reject(err);
+					return;
+				}
+				Logger.success("Successfully connected to the database!");
+	
+				this.dbClient = dbClient;
+				this.db = dbClient.db(this.dbName);
+				this.lokeStats = this.db.collection("lokeStats");
+				this.quotes = this.db.collection("quotes");
+				this.connected = true;
+				EventHandler.trigger(BotEvent.CONNECTED, true);
+
+				resolve(this.db);
+
+			});
+
+		})
 	}
 
 	/**
@@ -277,11 +290,20 @@ export class DbRemote {
 	/**
 	 * Close the connection to the database.
 	 */
-	public async closeConnection(): Promise<void> {
-		if (this.dbClient) {
-			return this.dbClient.close();
-		}
-		return new Promise<void>((resolve, reject) => { resolve() });
+	public async disconnect(): Promise<void> {
+
+		return new Promise<void>((resolve, reject) => {
+            if (this.dbClient) {
+                this.dbClient.close().then(
+                    () => {
+                        this.connected = false;
+                        Logger.success("Closed connection to the database!");
+                        return resolve();
+                    }, reject );
+            }
+            else resolve();
+		})
+		
 	}
 	
 }

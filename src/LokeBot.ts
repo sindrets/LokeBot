@@ -5,17 +5,14 @@ import { BotEvent } from "Constants";
 import { DbRemote } from "DbRemote";
 import { Client, DMChannel, GroupDMChannel, Guild, GuildChannel, GuildMember, RichEmbed, Role, StringResolvable, TextChannel, User } from "discord.js";
 import { EventHandler } from "EventHandler";
-import { FlagParser } from "FlagParser.js";
 import { GuildMap, Loker, UserMap } from "Interfaces";
 import { Logger } from "Logger.js";
 import Long from "long";
-import moment from "moment";
-import schedule, { Job } from "node-schedule";
+import { printNextInvocations } from "misc/ScheduleJobUtc";
 import { RuleEnforcer } from "RuleEnforcer";
 
 export default class LokeBot {
 
-	public static DEBUG_MODE: boolean = false;
 	public static TOKEN: string = auth.TOKEN;
 
 	private ready: boolean = false;
@@ -37,29 +34,15 @@ export default class LokeBot {
 	public commandHandler: CommandHandler;
 	public ruleEnforcer: RuleEnforcer;
 
-	constructor(args?: string[], flags?: FlagParser) {
-
-		if (flags) {
-
-			let user = flags.get("user");
-			switch (user) {
-				case "debugger":
-					LokeBot.TOKEN = auth.DEBUG_TOKEN;
-					break;
-				case "default":
-				default:
-					LokeBot.TOKEN = auth.TOKEN;
-			}
-
-		}
+	constructor() {
 
 		this.client = new Client();
 		this.dbRemote = new DbRemote();
 		this.commandHandler = new CommandHandler(this);
 		this.ruleEnforcer = new RuleEnforcer();
 
-		process.on("SIGINT", () => { this.shutdown() });
-		process.on("SIGABRT", () => { this.shutdown() });
+		process.on("SIGINT", () => { this.exit() });
+		process.on("SIGABRT", () => { this.exit() });
 
 	}
 
@@ -72,7 +55,7 @@ export default class LokeBot {
 			this.populateGuildMap();
 			this.populateUserMap();
 			initBehaviour(this);
-			this.logNextInvocations();
+			printNextInvocations();
 
 			this.ready = true;
 			EventHandler.trigger(BotEvent.BOT_READY, true);
@@ -109,14 +92,6 @@ export default class LokeBot {
 		this.dbRemote.connect();
 
 		this.client.login(LokeBot.TOKEN);
-
-	}
-
-	public logNextInvocations(): void {
-
-		for (let job in schedule.scheduledJobs) {
-			Logger.info(`Job <${job}> next invocation: ` + schedule.scheduledJobs[job].nextInvocation());
-		}
 
 	}
 
@@ -606,49 +581,15 @@ export default class LokeBot {
 	/**
 	 * Close all connections and exit
 	 */
-	public async shutdown(): Promise<void> {
+	public async exit(): Promise<void> {
 
-		Logger.println("Closing connections and shutting down...");
-		await this.client.destroy();
-		await this.dbRemote.closeConnection();
+		Logger.println("\nClosing connections and exiting...");
+		await this.client.destroy().then(() => {
+			Logger.success("Successfully disconnected client!");
+		});
+		await this.dbRemote.disconnect();
 		Logger.println("Successfully closed all connections!");
 		process.exit(0);
-
-	}
-
-	/**
-	 * Create a schedule job with a UTC invocation time.
-	 * @param name name of the new Job
-	 * @param spec scheduling info
-	 * @param utcOffset the UTC offset of the scheduled time. I.e. Norway is UTC +01:00
-	 * @param callback callback to be executed on each invocation
-	 */
-	public scheduleJobUtc(name: string, spec: {
-		year?: number, month?: number, date?: number,
-		hour?: number, minute?: number, second?: number
-	}, utcOffset: number, callback: () => void): Job {
-
-		let t = moment().utc();
-
-		if (spec.year != undefined) t.set("year", spec.year);
-		if (spec.month != undefined) t.set("month", spec.month - 1);
-		if (spec.date != undefined) t.set("date", spec.date - 1);
-		if (spec.hour != undefined) t.set("hour", spec.hour);
-		if (spec.minute != undefined) t.set("minute", spec.minute);
-		if (spec.second != undefined) t.set("second", spec.second);
-
-		let currentOffset = new Date().getTimezoneOffset();
-		t.utcOffset(-currentOffset - (utcOffset * 60));
-
-		let rule = new schedule.RecurrenceRule();
-		if (spec.year != undefined) rule.year = t.get("year");
-		if (spec.month != undefined) rule.month = t.get("month");
-		if (spec.date != undefined) rule.date = t.get("day");
-		if (spec.hour != undefined) rule.hour = t.get("hour");
-		if (spec.minute != undefined) rule.minute = t.get("minute");
-		if (spec.second != undefined) rule.second = t.get("second");
-
-		return schedule.scheduleJob(name, rule, callback);
 
 	}
 
