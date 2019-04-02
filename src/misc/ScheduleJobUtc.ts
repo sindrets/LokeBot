@@ -115,7 +115,7 @@ export function scheduleJobUtc(name: string, interval: JobSpec | string, utcOrTz
 
     let currentOffset = new Date().getTimezoneOffset();
     t0 = t1.clone();
-    t1.add((currentOffset + utcOffset) / 60, "hours");
+    t1.add((-currentOffset - utcOffset), "minutes");
 
     let diffs: { [key: string]: number } = {
 
