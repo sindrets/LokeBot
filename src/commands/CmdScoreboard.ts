@@ -31,7 +31,9 @@ export function init(ch: CommandHandler, bot: LokeBot) {
 
                 ranked.forEach(item => {
                     let value = item.fields["meanderDays"].value;
-                    table.addRow(item.rank, item.name, value, (100*value/30).toFixed(1) + "%");
+                    let name = item.name;
+                    if (name.length > 12) name = name.substr(0, 9) + "...";
+                    table.addRow(item.rank, name, value, (100*value/30).toFixed(1) + "%");
                 });
 
                 let embed = new RichEmbed();
