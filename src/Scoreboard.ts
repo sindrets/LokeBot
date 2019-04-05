@@ -25,11 +25,7 @@ export enum RankStrategy {
 
 export class Scoreboard {
 
-    private items: ScoreboardMap;
-
-    constructor() {
-        this.items = new Map();
-    }
+    private items: ScoreboardMap = new Map();
 
     public addItem(item: ScoreboardItem): ScoreboardMap {
 

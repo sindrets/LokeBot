@@ -7,7 +7,7 @@ export function init(bot: LokeBot) {
 
     // set all users' loke status to true, and remove "Loker" /
 	// "Rutta-gutta" role every morning.
-	scheduleJobUtc("Reset Loke-Status", { hour: parseInt(config.periodStart), minute: 0, second: 0 }, config.timezone, () => {
+	scheduleJobUtc("Reset Loke-Status", config.timeReset, config.timezone, () => {
 		
 		Logger.info("Resetting Loke roles...");
 		bot.iterateLokere(loker => {

@@ -1,8 +1,8 @@
 import config from "config.json";
+import cronParser from "cron-parser";
 import LokeBot from "LokeBot";
 import { sprintf } from "sprintf-js";
 import moment = require("moment-timezone");
-import { getTimezoneOffset } from "misc/ScheduleJobUtc";
 
 export function init(bot: LokeBot) {
 
@@ -13,13 +13,20 @@ export function init(bot: LokeBot) {
 		let loker = bot.getLokerById(msg.author.id);
 		if (msg.guild && loker && loker.status) {
 
-			let format: string = "hh:mm";
-			let utcOffset = getTimezoneOffset(config.timezone || moment.tz.guess());
-			let t = moment.utc().add(utcOffset, "minutes");
-			let active: boolean = t.isBetween(moment(config.periodStart, format), moment(config.periodEnd, format));
+			let format: string = "HH:mm";
+			let t = moment.utc();
+			let dayOfWeek = t.isoWeekday();
+			let periodStart = cronParser.parseExpression(config.timeReset);
+			let periodEnd = cronParser.parseExpression(config.timeJudgement);
+			let active: boolean = t.isBetween(
+				moment(periodStart.next()._date.format(format), format).utc(true), 
+				moment(periodEnd.next()._date.format(format), format).utc(true)
+			) && (
+				periodStart._fields.dayOfWeek.indexOf(dayOfWeek) != -1 &&
+				periodEnd._fields.dayOfWeek.indexOf(dayOfWeek) != -1
+			);
 
-			// ensure that it's not a weekend.
-			if (active && [6,7].indexOf(t.isoWeekday()) == -1) {
+			if (active) {
 				bot.dbRemote.getStatsSingle(loker.user, doc => {
 					
 					if ( (doc && doc.state && loker) || (!doc && loker) ) {

@@ -12,7 +12,9 @@ export class Logger {
     public static debug(message?: any): void {
         if (Globals.DEBUG_MODE) {
             let pos = getCursorPos.sync();
-            if (pos.col == 1) process.stdout.write(chalk.yellow("DEBUGGER: "));
+            if ((pos && pos.col == 1) || pos === undefined) {
+                process.stdout.write(chalk.yellow("DEBUGGER: "));
+            }
             process.stdout.write(message);
         }
     }
@@ -26,7 +28,9 @@ export class Logger {
     public static debugln(message?: any, ...optionalParams: any[]): void {
         if (Globals.DEBUG_MODE) {
             let pos = getCursorPos.sync();
-            if (pos.col == 1) process.stdout.write(chalk.yellow("DEBUGGER: "));
+            if ((pos && pos.col == 1) || pos === undefined) {
+                process.stdout.write(chalk.yellow("DEBUGGER: "));
+            }
             console.log(message, ...optionalParams);
         }
     }

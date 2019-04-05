@@ -35,10 +35,14 @@ switch (Globals.flags.get("user")) {
         LokeBot.TOKEN = auth.TOKEN;
 }
 
+// global variables
+var bot: LokeBot;
+var BotGlobals = Globals;
+
 if (Globals.flags.isTrue("test")) {
     new TestRunner();
 }
 else {
-    const bot = new LokeBot();
+    bot = new LokeBot();
     bot.start();
 }

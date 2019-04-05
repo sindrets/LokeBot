@@ -6,7 +6,7 @@ import { DbRemote } from "DbRemote";
 import { Client, DMChannel, GroupDMChannel, Guild, GuildChannel, GuildMember, RichEmbed, Role, StringResolvable, TextChannel, User } from "discord.js";
 import { EventHandler } from "EventHandler";
 import { GuildMap, Loker, UserMap } from "Interfaces";
-import { Logger } from "Logger.js";
+import { Logger } from "Logger";
 import Long from "long";
 import { printNextInvocations } from "misc/ScheduleJobUtc";
 import { RuleEnforcer } from "RuleEnforcer";
@@ -16,6 +16,7 @@ export default class LokeBot {
 	public static TOKEN: string = auth.TOKEN;
 
 	private ready: boolean = false;
+	private exiting: boolean = false;
 	
 	/**
 	 * A map where all the guilds the bot is member of is paired with
@@ -618,12 +619,18 @@ export default class LokeBot {
 	 */
 	public async exit(): Promise<void> {
 
+		if (this.exiting) return;
+		this.exiting = true;
+		
 		Logger.println("\nClosing connections and exiting...");
+
 		await this.client.destroy().then(() => {
 			Logger.success("Successfully disconnected client!");
 		});
+
 		await this.dbRemote.disconnect();
 		Logger.println("Successfully closed all connections!");
+
 		process.exit(0);
 
 	}

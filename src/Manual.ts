@@ -1,10 +1,6 @@
 import config from "./config.json";
 
-interface Manual {
-	[key: string]: string
-}
-
-export const manual: Manual = {
+export const Manual: { [key: string]: string } = {
 
 	"stats": 
 `stats [userQuery]
@@ -68,6 +64,12 @@ export const manual: Manual = {
  * @param message: <String> The string to convert.
  * @flag --decode Decode a l33t 5tr1n6.
  * @example ${config.prefix}l33t kek get rekt noob
+ */`,
+
+ 	"scoreboard":
+`scoreboard
+/**
+ * Display the scoreboard.
  */`,
 
 }

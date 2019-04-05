@@ -1,13 +1,12 @@
-import assert from "assert";
 import { User } from "discord.js";
-import { Logger } from "Logger.js";
+import { Logger } from "Logger";
 import { Collection, Db, InsertOneWriteOpResult, MongoClient, MongoError, ReplaceWriteOpResult, UpdateWriteOpResult } from "mongodb";
 import { sprintf } from "sprintf-js";
 import auth from "./auth.json";
-import { BotEvent } from "./Constants.js";
-import { EventHandler } from "./EventHandler.js";
-import { LokerStatDoc } from "./Interfaces.js";
-import { Utils } from "./misc/Utils.js";
+import { BotEvent } from "./Constants";
+import { EventHandler } from "./EventHandler";
+import { LokerStatDoc } from "./Interfaces";
+import { Utils } from "./misc/Utils";
 
 export class DbRemote {
 
@@ -21,7 +20,7 @@ export class DbRemote {
 	private connected: boolean = false;
 
 	constructor() {
-		this.uri = sprintf(auth.SRV_ADDRESS, auth.DB_U, auth.DB_P);
+		this.uri = sprintf(auth.SRV_ADDRESS, auth.DB_U, encodeURI(auth.DB_P));
 		this.dbName = auth.DB_NAME;
 	}
 

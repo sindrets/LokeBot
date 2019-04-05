@@ -1,9 +1,9 @@
 import { Message } from "discord.js";
 import fs from "fs";
-import { Logger } from "Logger.js";
+import { Logger } from "Logger";
 import path from "path";
 import config from "./config.json";
-import { FlagParser } from "./FlagParser.js";
+import { FlagParser } from "./FlagParser";
 import LokeBot from "./LokeBot";
 
 type CmdHandlerDict = { [key: string]: (msg: Message, flags: FlagParser, ...args: any[]) => void };

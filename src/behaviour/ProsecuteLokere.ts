@@ -9,7 +9,7 @@ export function init(bot: LokeBot) {
 
     // all users who are still marked as Loker at periodEnd, gets the 
 	// Loker role.
-	scheduleJobUtc("Prosecute Lokere", { hour: parseInt(config.periodEnd), minute: 0, second: 0 }, config.timezone, () => {
+	scheduleJobUtc("Prosecute Lokere", config.timeJudgement, config.timezone, () => {
 		
 		// ignore saturdays and sundays.
 		let now = moment().utc().isoWeekday();

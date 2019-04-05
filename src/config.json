@@ -1,6 +1,6 @@
 {
     "prefix": "#!",
     "timezone": "Europe/Oslo",
-    "periodStart": "06:00",
-    "periodEnd": "12:00"
+    "timeReset": "0 6 * * 1-6",
+    "timeJudgement": "0 12 * * 1-5"
 }

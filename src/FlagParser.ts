@@ -59,7 +59,7 @@ export class FlagParser extends Map<string,string> {
      * The arg `--foo="bar baz"` will be parsed as the flag:
      * - foo: "bar baz"
      */
-    public static parse(args: string[], unquoteArgs=true): FlagParser {
+    public static parse(args: string[], unquoteArgs=true, isShellArgs=false): FlagParser {
 
         let result: FlagParser = new FlagParser();
         let offset = 0;
@@ -69,7 +69,16 @@ export class FlagParser extends Map<string,string> {
             if (arg.substr(0, 2) == "--") {
                 let value: string = "";
                 let identifier = arg.substring(2);
-                let match = identifier.match(/((?<=\S\=)(["'`])(?:(?=(\\?))\3.)*?\2)|((?<=\S\=)[^\s]*)/gm);
+                let match: RegExpMatchArray | null = null;
+
+                if (!isShellArgs) {
+                    match = identifier.match(/((?<=\S\=)(["'`])(?:(?=(\\?))\3.)*?\2)|((?<=\S\=)[^\s]*)/gm);
+                }
+                else {
+                    // shell args are unquoted by default.
+                    match = identifier.match(/(?<=\=).*/gm);
+                }
+
                 if (match) {
                     value = Utils.unquote(match[0]);
                     identifier = arg.substring(2, arg.indexOf("="));

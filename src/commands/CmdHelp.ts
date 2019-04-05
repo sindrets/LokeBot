@@ -1,6 +1,6 @@
 import { CommandHandler } from "CommandHandler";
 import LokeBot from "LokeBot";
-import { manual } from "Manual";
+import { Manual } from "Manual";
 
 export function init(ch: CommandHandler, bot: LokeBot) {
 
@@ -12,15 +12,15 @@ export function init(ch: CommandHandler, bot: LokeBot) {
         let s: string[] = [""];
         if (args[0]) {
             let cmd = (args[0] as string).toLowerCase();
-            if (manual[cmd] != undefined) {
-                s[0] = manual[cmd];
+            if (Manual[cmd] != undefined) {
+                s[0] = Manual[cmd];
             } else {
                 s[0] = "/**\n * There was no command by that name in the manual. \n */";
             }
         } else {
             s = [];
-            for (let cmd in manual) {
-                s.push(manual[cmd]);
+            for (let cmd in Manual) {
+                s.push(Manual[cmd]);
             }
         }
 
