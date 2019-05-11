@@ -17,7 +17,7 @@ export function init(ch: CommandHandler, bot: LokeBot) {
                 let scoreboard = new Scoreboard();
 
                 docs.forEach(lokerStats => {
-                    let displayName = bot.getDisplayName(lokerStats.uid, msg.guild) || "";
+                    let displayName = (bot.getDisplayName(lokerStats.uid, msg.guild) || "").trim();
                     let interval = Utils.getDatesInLast(30, "days", lokerStats.meanderDays);
                     scoreboard.addItem(new ScoreboardItem(lokerStats.uid, displayName, { meanderDays: { value: interval.length } }));
                 })

@@ -51,15 +51,17 @@ export default class LokeBot {
 		
 		this.client.on('ready', () => {
 
-			Logger.info(`Logged in as ${this.client.user.tag}!`);
-			
-			this.populateGuildMap();
-			this.populateUserMap();
-			initBehaviour(this);
-			printNextInvocations();
-
-			this.ready = true;
-			EventHandler.trigger(BotEvent.BOT_READY, true);
+			if (!this.ready) {
+				Logger.info(`Logged in as ${this.client.user.tag}!`);
+				
+				this.populateGuildMap();
+				this.populateUserMap();
+				initBehaviour(this);
+				printNextInvocations();
+	
+				this.ready = true;
+				EventHandler.trigger(BotEvent.BOT_READY, true);
+			}
 			
 		});
 
@@ -456,6 +458,9 @@ export default class LokeBot {
 
 	public getDisplayName(userQuery: string | User | Loker, guildQuery?: string | Guild): string | null {
 		
+		// all non-ascii characters
+		let filter = /[^\x00-\x7F]/g;
+		
 		let guild: Guild | null = null;
 		if (typeof guildQuery == "string") {
 			guild = this.queryGuilds(guildQuery);
@@ -478,16 +483,16 @@ export default class LokeBot {
 			}
 	
 			if (!member) return null;
-			return member.displayName;
+			return member.displayName.replace(filter, "");
 		}
 		else {
-			if (userQuery instanceof User) return userQuery.username;
+			if (userQuery instanceof User) return userQuery.username.replace(filter, "");
 			if (typeof userQuery == "string") {
 				let loker = this.queryUsers(userQuery);
-				if (loker) return loker.user.username;
+				if (loker) return loker.user.username.replace(filter, "");
 				else return null;
 			}
-			else return userQuery.user.username;
+			else return userQuery.user.username.replace(filter, "");
 		}
 		
 	}
