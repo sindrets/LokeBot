@@ -10,11 +10,12 @@ export class Logger {
      */
     public static debug(message?: any): void {
         if (Globals.DEBUG_MODE) {
+            let prefix = "";
             let pos = getCursorPos.sync();
             if ((pos && pos.col == 1) || pos === undefined) {
-                process.stdout.write(chalk.yellow("DEBUGGER: "));
+                prefix = chalk.yellow("DEBUGGER: ");
             }
-            process.stdout.write(message);
+            process.stdout.write(prefix, message);
         }
     }
 
@@ -26,11 +27,12 @@ export class Logger {
      */
     public static debugln(message?: any, ...optionalParams: any[]): void {
         if (Globals.DEBUG_MODE) {
+            let prefix = "";
             let pos = getCursorPos.sync();
             if ((pos && pos.col == 1) || pos === undefined) {
-                process.stdout.write(chalk.yellow("DEBUGGER: "));
+                prefix = chalk.yellow("DEBUGGER: ");
             }
-            console.log(message, ...optionalParams);
+            console.log(prefix, message, ...optionalParams);
         }
     }
 
@@ -60,8 +62,7 @@ export class Logger {
         if (typeof message === "string") {
             message = chalk.blue(message);
         }
-        process.stdout.write(chalk.blue("INFO: "));
-        console.log(message, ...optionalParams);
+        console.log(chalk.blue("INFO: "), message, ...optionalParams);
     }
 
     /**
@@ -85,8 +86,7 @@ export class Logger {
         if (typeof message === "string") {
             message = chalk.yellowBright(message);
         }
-        process.stdout.write(chalk.yellowBright("WARNING: "));
-        console.log(message, ...optionalParams);
+        console.log(chalk.yellowBright("WARNING: "), message, ...optionalParams);
     }
 
     /**

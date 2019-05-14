@@ -14,8 +14,8 @@ export function init(bot: LokeBot) {
 		if (msg.guild && loker && loker.status) {
 
 			let format: string = "HH:mm";
-			let t = moment.utc();
-			let dayOfWeek = t.isoWeekday();
+			let t = moment.utc().tz(config.timezone);
+			let dayOfWeek = t.weekday();
 			let periodStart = cronParser.parseExpression(config.timeReset);
 			let periodEnd = cronParser.parseExpression(config.timeJudgement);
 			let active: boolean = t.isBetween(

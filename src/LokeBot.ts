@@ -458,8 +458,8 @@ export default class LokeBot {
 
 	public getDisplayName(userQuery: string | User | Loker, guildQuery?: string | Guild): string | null {
 		
-		// all non-ascii characters
-		let filter = /[^\x00-\x7F]/g;
+		// allow only characters in the extended ascii range (0-255)
+		let filter = /[^\x00-\xff]/g;
 		
 		let guild: Guild | null = null;
 		if (typeof guildQuery == "string") {
