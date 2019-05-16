@@ -14,13 +14,13 @@ export function init(bot: LokeBot) {
 		if (msg.guild && loker && loker.status) {
 
 			let format: string = "HH:mm";
-			let t = moment.utc().tz(config.timezone);
+			let t = moment.tz(config.timezone);
 			let dayOfWeek = t.weekday();
 			let periodStart = cronParser.parseExpression(config.timeReset);
 			let periodEnd = cronParser.parseExpression(config.timeJudgement);
 			let active: boolean = t.isBetween(
-				moment(periodStart.next()._date.format(format), format).utc(true), 
-				moment(periodEnd.next()._date.format(format), format).utc(true)
+				moment(periodStart.next()._date.format(format), format).tz(config.timezone, true), 
+				moment(periodEnd.next()._date.format(format), format).tz(config.timezone, true)
 			) && (
 				periodStart._fields.dayOfWeek.indexOf(dayOfWeek) != -1 &&
 				periodEnd._fields.dayOfWeek.indexOf(dayOfWeek) != -1
