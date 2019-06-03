@@ -60,7 +60,7 @@ export class CommandHandler {
 	 */
 	public runCommand(cmd: string, msg: Message, flags: FlagParser, ...args: any[]): void {
 		if (!this.handlers[cmd]) return;
-		this.handlers[cmd](msg, flags, args);
+		this.handlers[cmd](msg, flags, ...args);
 	}
 
 	/**

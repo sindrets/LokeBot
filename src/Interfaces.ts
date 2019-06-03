@@ -1,8 +1,11 @@
 import { Guild, User } from "discord.js";
-import LokeBot from "./LokeBot";
+import { CommandHandler } from "CommandHandler";
+import LokeBot from "LokeBot";
 
 export type GuildMap = Map<Guild, User[]>;
 export type UserMap = Map<User, Loker>;
+
+export type CmdInitializer = (ch: CommandHandler, bot: LokeBot) => void;
 
 export interface Loker {
 	user: User,
@@ -29,6 +32,12 @@ export interface LokerStatDoc {
      * An array of all registered loke-days. 
      */
 	meanderDays: Date[]
+}
+
+export interface ExceptionDoc {
+    _id?: string,
+    periodStart: Date,
+    periodEnd: Date
 }
 
 export type EventListener = {

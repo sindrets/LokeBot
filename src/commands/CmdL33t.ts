@@ -1,13 +1,12 @@
-import LokeBot from "LokeBot";
-import { CommandHandler } from "CommandHandler";
 import { Leet } from "misc/Leet";
+import { CmdInitializer } from "Interfaces";
 
-export function init(ch: CommandHandler, bot: LokeBot) {
+export let init: CmdInitializer = (ch, bot) => {
 
     /**
      * @flag --decode
      */
-    ch.addCommand("l33t", (msg, flags, args) => {
+    ch.addCommand("l33t", (msg, flags, ...args) => {
 
         if (args.length == 0) {
             msg.reply("Please provide a string to convert. For usage; `#!help l33t`");

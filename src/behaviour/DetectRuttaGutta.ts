@@ -3,6 +3,8 @@ import cronParser from "cron-parser";
 import LokeBot from "LokeBot";
 import { sprintf } from "sprintf-js";
 import moment = require("moment-timezone");
+import { getActiveException } from "commands/CmdException";
+import { printNextInvocations } from "misc/ScheduleJobUtc";
 
 export function init(bot: LokeBot) {
 
@@ -25,6 +27,15 @@ export function init(bot: LokeBot) {
 				periodStart._fields.dayOfWeek.indexOf(dayOfWeek) != -1 &&
 				periodEnd._fields.dayOfWeek.indexOf(dayOfWeek) != -1
 			);
+
+			// ignore exception periods.
+			bot.dbRemote.getExceptionAll((docs, err) => {
+				if (docs) {
+					if (getActiveException(docs) !== null) {
+						active = false;
+					}
+				}
+			}, true);
 
 			if (active) {
 				bot.dbRemote.getStatsSingle(loker.user, doc => {

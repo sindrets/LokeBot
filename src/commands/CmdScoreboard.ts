@@ -1,11 +1,10 @@
-import { CommandHandler } from "CommandHandler";
-import LokeBot from "LokeBot";
 import AsciiTable from "ascii-table";
-import { Scoreboard, ScoreboardItem, RankStrategy } from "Scoreboard";
-import { Utils } from "misc/Utils";
 import { RichEmbed } from "discord.js";
+import { CmdInitializer } from "Interfaces";
+import { Utils } from "misc/Utils";
+import { RankStrategy, Scoreboard, ScoreboardItem } from "Scoreboard";
 
-export function init(ch: CommandHandler, bot: LokeBot) {
+export let init: CmdInitializer = (ch, bot) => {
 
     ch.addCommand("scoreboard", (msg, flags, args) => {
 

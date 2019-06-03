@@ -1,9 +1,8 @@
-import { CommandHandler } from "CommandHandler";
-import LokeBot from "LokeBot";
+import { CmdInitializer } from "Interfaces";
 import { Utils } from "misc/Utils";
 import { Rules } from "Rules";
 
-export function init(ch: CommandHandler, bot: LokeBot) {
+export let init: CmdInitializer = (ch, bot) => {
 
     ch.addCommand("rules", (msg, flags, args) => {
 

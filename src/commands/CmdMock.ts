@@ -1,11 +1,9 @@
-import { CommandHandler } from "CommandHandler";
-import LokeBot from "LokeBot";
+import { CmdInitializer } from "Interfaces";
 import { Utils } from "misc/Utils";
 
+export let init: CmdInitializer = (ch, bot) => {
 
-export function init(ch: CommandHandler, bot: LokeBot) {
-
-    ch.addCommand("mock", (msg, flags, args) => {
+    ch.addCommand("mock", (msg, flags, ...args) => {
 
         if (args.length == 0) {
             msg.reply("Please provide a string to mockify. For usage; `#!help mock`");

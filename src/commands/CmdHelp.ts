@@ -1,13 +1,12 @@
-import { CommandHandler } from "CommandHandler";
-import LokeBot from "LokeBot";
+import { CmdInitializer } from "Interfaces";
 import { Manual } from "Manual";
 
-export function init(ch: CommandHandler, bot: LokeBot) {
+export let init: CmdInitializer = (ch, bot) => {
 
     /**
      * @flag --here
      */
-    ch.addCommand("help", (msg, flags, args) => {
+    ch.addCommand("help", (msg, flags, ...args) => {
 
         let s: string[] = [""];
         if (args[0]) {

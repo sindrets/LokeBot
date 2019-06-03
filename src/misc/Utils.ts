@@ -119,6 +119,19 @@ export class Utils {
 		});
 	}
 
+	public static enumToString(enumerator: any): string {
+
+		let result = "[";
+
+		Object.keys(enumerator).forEach((key, i) => {
+			if (i > 0) result += ", ";
+			result += "'" + String(enumerator[key]) + "'";
+		})
+		
+		return result + "]";
+		
+	}
+
 	public static getDatesInPeriod(dates: Date[], period: "year" | "month" | "week", isoIndex: number): Date[] {
 		
 		let result: Date[] = [];

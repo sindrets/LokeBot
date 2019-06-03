@@ -1,18 +1,17 @@
-import { CommandHandler } from "CommandHandler";
 import config from "config.json";
 import { Guild, GuildMember, RichEmbed, User } from "discord.js";
-import LokeBot from "LokeBot";
+import { CmdInitializer } from "Interfaces";
 import { Utils } from "misc/Utils";
-import moment = require("moment");
+import moment from "moment-timezone";
 
-export function init(ch: CommandHandler, bot: LokeBot) {
+export let init: CmdInitializer = (ch, bot) => {
 
     /**
      * if additional arg is supplied: query stats for that user.
      * @param args[0] user query 
      * @flag --all
      */
-    ch.addCommand("stats", (msg, flags, args) => {
+    ch.addCommand("stats", (msg, flags, userQuery: string, ...args) => {
 
         let name = msg.member ? msg.member.displayName : msg.author.username;
         let target: User = msg.author;
@@ -20,8 +19,8 @@ export function init(ch: CommandHandler, bot: LokeBot) {
         let now = moment.utc().tz(config.timezone || moment.tz.guess());
 
         // @param arg[0] user query.
-        if (args[0] != undefined) {
-            let member = bot.queryUsers(args[0], guild);
+        if (userQuery !== undefined) {
+            let member = bot.queryUsers(userQuery, guild);
             if (member) {
                 target = member.user;
                 if (member instanceof GuildMember)

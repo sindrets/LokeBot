@@ -72,4 +72,13 @@ export const Manual: { [key: string]: string } = {
  * Display the scoreboard.
  */`,
 
+ 	"exception":
+`exception operation [...args]
+/**
+ * Manage exception periods.
+ * @param operation: <String> The operation to perform. Available operations
+ * 			are: list, add, remove
+ * @example ${config.prefix}exception list
+ */`,
+
 }

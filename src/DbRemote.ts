@@ -1,11 +1,11 @@
 import { User } from "discord.js";
 import { Logger } from "Logger";
-import { Collection, Db, InsertOneWriteOpResult, MongoClient, MongoError, ReplaceWriteOpResult, UpdateWriteOpResult } from "mongodb";
+import { Collection, Db, InsertOneWriteOpResult, MongoClient, MongoError, ReplaceWriteOpResult, UpdateWriteOpResult, DeleteWriteOpResultObject } from "mongodb";
 import { sprintf } from "sprintf-js";
 import auth from "./auth.json";
 import { BotEvent } from "./Constants";
 import { EventHandler } from "./EventHandler";
-import { LokerStatDoc } from "./Interfaces";
+import { LokerStatDoc, ExceptionDoc } from "./Interfaces";
 import { Utils } from "./misc/Utils";
 
 export class DbRemote {
@@ -13,10 +13,11 @@ export class DbRemote {
 	private readonly uri: string;
 	private readonly dbName: string;
 
-	private dbClient: MongoClient | undefined;
-	private db: Db | undefined;
-	private lokeStats: Collection | undefined;
-	private quotes: Collection | undefined;
+	private dbClient?: MongoClient;
+	private db?: Db;
+	private lokeStats?: Collection;
+	private exceptions?: Collection;
+	private quotes?: Collection;
 	private connected: boolean = false;
 
 	constructor() {
@@ -44,6 +45,7 @@ export class DbRemote {
 				this.dbClient = dbClient;
 				this.db = dbClient.db(this.dbName);
 				this.lokeStats = this.db.collection("lokeStats");
+				this.exceptions = this.db.collection("exceptions");
 				this.quotes = this.db.collection("quotes");
 				this.connected = true;
 				EventHandler.trigger(BotEvent.CONNECTED, true);
@@ -80,6 +82,30 @@ export class DbRemote {
 			});
 		}
 
+	}
+
+	public insertExceptionSingle(periodStart: Date, periodEnd: Date, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void) {
+
+		if (this.exceptions) {
+
+			this.exceptions.insertOne({ periodStart: periodStart, periodEnd: periodEnd }, (err, result) => {
+				if (callback) callback(err, result);
+			});
+			
+		}
+		
+	}
+
+	public deleteExceptionSingle(id: string, callback?: (err: MongoError, result: DeleteWriteOpResultObject) => void) {
+
+		if (this.exceptions) {
+
+			this.exceptions.deleteOne({ _id: id }, (err, result) => {
+				if (callback) callback(err, result);
+			});
+			
+		}
+		
 	}
 
 	/**
@@ -199,6 +225,23 @@ export class DbRemote {
 			}
 		
 		}, true);
+		
+	}
+
+	public getExceptionAll(callback?: (docs: any[] | null, err: MongoError) => void, sortDates=false) {
+
+		if (this.exceptions) {
+			this.exceptions.find().toArray((err, docs) => {
+				if (docs && sortDates) {
+					(docs as ExceptionDoc[]).sort((a,b) => {
+						if (a.periodStart > b.periodStart) return 1;
+						if (a.periodStart < b.periodStart) return -1;
+						return 0;
+					})
+				}
+				if (callback) callback(docs, err);
+			});
+		}
 		
 	}
 

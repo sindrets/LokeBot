@@ -1,11 +1,9 @@
-import { CommandHandler } from "CommandHandler";
-import { GelbooruResponseBody } from "Interfaces";
-import LokeBot from "LokeBot";
+import { GelbooruResponseBody, CmdInitializer } from "Interfaces";
 import { TrashConveyor } from "TrashConveyor";
 
-export function init(ch: CommandHandler, bot: LokeBot) {
+export let init: CmdInitializer = (ch, bot) => {
 
-    ch.addCommand("iamtrash", (msg, flags, args) => {
+    ch.addCommand("iamtrash", (msg, flags, ...args: string[]) => {
 
         let response: GelbooruResponseBody | null = null;
         TrashConveyor.getRandomPost(args).then(resp => {

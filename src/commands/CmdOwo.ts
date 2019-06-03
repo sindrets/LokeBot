@@ -1,10 +1,9 @@
-import { CommandHandler } from "CommandHandler";
-import LokeBot from "LokeBot";
+import { CmdInitializer } from "Interfaces";
 import owofy = require("owofy");
 
-export function init(ch: CommandHandler, bot: LokeBot) {
+export let init: CmdInitializer = (ch, bot) => {
 
-    ch.addCommand("owo", (msg, flags, args) => {
+    ch.addCommand("owo", (msg, flags, ...args) => {
 
         if (args.length == 0) {
             msg.reply("Please provide a string to owofy. For usage; `#!help owo`");

@@ -4,6 +4,7 @@ import LokeBot from "LokeBot";
 import moment from 'moment';
 import { Logger } from "Logger";
 import { scheduleJobUtc, printNextInvocations } from "misc/ScheduleJobUtc";
+import { getActiveException } from "commands/CmdException";
 
 export function init(bot: LokeBot) {
 
@@ -11,9 +12,22 @@ export function init(bot: LokeBot) {
 	// Loker role.
 	scheduleJobUtc("Prosecute Lokere", config.timeJudgement, config.timezone, () => {
 		
+		let active = true;
+		
 		// ignore saturdays and sundays.
 		let now = moment().utc().isoWeekday();
-		if (now == 6 || now == 7) {
+		if (now == 6 || now == 7) active = false;
+
+		// ignore exception periods.
+		bot.dbRemote.getExceptionAll((docs, err) => {
+			if (docs) {
+				if (getActiveException(docs) !== null) {
+					active = false;
+				}
+			}
+		}, true);
+
+		if (!active) {
 			printNextInvocations();
 			return;
 		}

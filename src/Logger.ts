@@ -15,7 +15,8 @@ export class Logger {
             if ((pos && pos.col == 1) || pos === undefined) {
                 prefix = chalk.yellow("DEBUGGER: ");
             }
-            process.stdout.write(prefix, message);
+            process.stdout.write(prefix);
+            process.stdout.write(message);
         }
     }
 
@@ -98,7 +99,7 @@ export class Logger {
         if (typeof message === "string") {
             message = chalk.red(message);
         }
-        else console.error(message, ...optionalParams);
+        else console.error(chalk.red("ERROR: "), message, ...optionalParams);
     }
 
 }

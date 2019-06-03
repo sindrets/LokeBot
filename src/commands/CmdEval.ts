@@ -1,15 +1,14 @@
-import { CommandHandler } from "CommandHandler";
-import { Logger } from "Logger";
-import LokeBot from "LokeBot";
-import stringifyObject = require("stringify-object");
 import chalk from "chalk";
+import { CmdInitializer } from "Interfaces";
+import { Logger } from "Logger";
+import stringifyObject = require("stringify-object");
 
-export function init(ch: CommandHandler, bot: LokeBot) {
+export let init: CmdInitializer = (ch, bot) => {
 
     /**
      * Debugging command. Evaluate and run javascript on the server.
      */
-    ch.addCommand("eval", (msg, flags, args) => {
+    ch.addCommand("eval", (msg, flags, ...args) => {
 
         if (msg.guild != null || !bot.isDevAdmin(msg.author.id)) return;
 
