@@ -28,7 +28,7 @@ export let init: CmdInitializer = (ch, bot) => {
 		constructor(msg: Message) {
 			super(
 				"InvalidPeriodError",
-				"Please specify a period in the format 'YYYY.MM.DD-YYYY.MM.DD'.",
+				"Please specify a period in the format 'DD.MM.YYYY-DD.MM.YYYY'.",
 				msg
 			);
 		}
@@ -44,7 +44,7 @@ export let init: CmdInitializer = (ch, bot) => {
 		}
 	}
 
-	ch.addCommand("exception", (msg, flags, operation?: string, arg1?: string) => {
+	ch.addCommand("exception", (msg, flags, operation?: string, ...args: string[]) => {
 
 		switch (operation) {
 
@@ -55,12 +55,18 @@ export let init: CmdInitializer = (ch, bot) => {
 					return;
 				}
 
-				if (arg1 === undefined) {
+				if (args[0] === undefined) {
+					new UserError("InvalidNameError", "No name was specified!", msg);
+					return;
+				}
+				let name = args[0];
+
+				if (args[1] === undefined) {
 					new InvalidPeriodError(msg);
 					return;
 				}
 
-				let dates = arg1.split("-");
+				let dates = args[1].split("-");
 				if (dates.length != 2) {
 					new InvalidPeriodError(msg);
 					return;
@@ -69,7 +75,7 @@ export let init: CmdInitializer = (ch, bot) => {
 				let period: Date[] = [];
 				let valid = true;
 				dates.forEach(date => {
-					let t = moment(date, "YYYY.M.D").tz(config.timezone, true);
+					let t = moment(date, "D.M.YYYY").tz(config.timezone, true);
 					if (!t.isValid()) valid = false;
 					period.push(t.toDate());
 				});
@@ -83,13 +89,15 @@ export let init: CmdInitializer = (ch, bot) => {
 					if (a > b) return 1;
 					return 0;
 				});
+				period[1].setHours(23, 59, 59);
 
-				bot.dbRemote.insertExceptionSingle(period[0], period[1], (err, result) => {
+				bot.dbRemote.insertExceptionSingle(name, period[0], period[1], (err, result) => {
 					if (result) {
 						msg.reply(
 							"```\n"
 							+ "Exception period successfully added:\n"
 							+ "{\n"
+							+ "  name: '" + name + "'\n"
 							+ "  periodStart: " + moment(period[0]).toString() + "\n"
 							+ "  periodEnd: " + moment(period[1]).toString() + "\n"
 							+ "}\n"
@@ -107,7 +115,7 @@ export let init: CmdInitializer = (ch, bot) => {
 					return;
 				}
 
-				if (arg1 === undefined || isNaN(Number(arg1))) {
+				if (args[0] === undefined || isNaN(Number(args[0]))) {
 					new InvalidPeriodIdError(msg);
 					return;
 				}
@@ -115,7 +123,7 @@ export let init: CmdInitializer = (ch, bot) => {
 				bot.dbRemote.getExceptionAll((docs, err) => {
 
 					if (docs) {
-						let target = getRelevantExceptions(docs)[Number(arg1)];
+						let target = getRelevantExceptions(docs)[Number(args[0])];
 						
 						if (target === undefined) {
 							new InvalidPeriodIdError(msg);
@@ -147,9 +155,9 @@ export let init: CmdInitializer = (ch, bot) => {
 						let n = 0;
 						getRelevantExceptions(docs).forEach((doc, i) => {
 							if (i > 0) result += "\n";
-							let t0 = moment(doc.periodStart).format("YYYY.MM.DD");
-							let t1 = moment(doc.periodEnd).format("YYYY.MM.DD");
-							result += `${i}: ${t0}-${t1}`;
+							let t0 = moment(doc.periodStart).format("DD.MM.YYYY");
+							let t1 = moment(doc.periodEnd).format("DD.MM.YYYY");
+							result += `${i}: '${doc.name}' ${t0}-${t1}`;
 							n++;
 						});
 						if (n == 0) result += "--NO UPCOMING EXCEPTION PERIODS--";

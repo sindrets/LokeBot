@@ -84,11 +84,11 @@ export class DbRemote {
 
 	}
 
-	public insertExceptionSingle(periodStart: Date, periodEnd: Date, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void) {
+	public insertExceptionSingle(name: string, periodStart: Date, periodEnd: Date, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void) {
 
 		if (this.exceptions) {
 
-			this.exceptions.insertOne({ periodStart: periodStart, periodEnd: periodEnd }, (err, result) => {
+			this.exceptions.insertOne({ name: name, periodStart: periodStart, periodEnd: periodEnd }, (err, result) => {
 				if (callback) callback(err, result);
 			});
 			

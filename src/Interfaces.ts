@@ -36,6 +36,7 @@ export interface LokerStatDoc {
 
 export interface ExceptionDoc {
     _id?: string,
+    name: string,
     periodStart: Date,
     periodEnd: Date
 }

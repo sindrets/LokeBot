@@ -13,10 +13,6 @@ export function init(bot: LokeBot) {
 	scheduleJobUtc("Prosecute Lokere", config.timeJudgement, config.timezone, () => {
 		
 		let active = true;
-		
-		// ignore saturdays and sundays.
-		let now = moment().utc().isoWeekday();
-		if (now == 6 || now == 7) active = false;
 
 		// ignore exception periods.
 		bot.dbRemote.getExceptionAll((docs, err) => {
