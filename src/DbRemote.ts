@@ -30,7 +30,7 @@ export class DbRemote {
 	 */
 	public async connect(): Promise<Db> {
 
-		return new Promise((resolve, reject) => {
+		return new Promise<Db>((resolve, reject) => {
 
 			MongoClient.connect(this.uri, {useNewUrlParser: true}, (err, dbClient) => {
 
@@ -70,7 +70,7 @@ export class DbRemote {
 	 * @param callback 
 	 */
 	public insertLokerSingle(user: User, state: boolean, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void): void
-	public insertLokerSingle(user: User, callbackOrState: boolean | Function | unknown, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void): void {
+	public insertLokerSingle(user: User, callbackOrState: boolean | Function | undefined, callback?: (err: MongoError, result: InsertOneWriteOpResult) => void): void {
 
 		if (this.lokeStats) {
 
@@ -228,7 +228,7 @@ export class DbRemote {
 		
 	}
 
-	public getExceptionAll(callback?: (docs: any[] | null, err: MongoError) => void, sortDates=false) {
+	public getExceptionAll(callback?: (docs: ExceptionDoc[] | null, err: MongoError) => void, sortDates=false) {
 
 		if (this.exceptions) {
 			this.exceptions.find().toArray((err, docs) => {
