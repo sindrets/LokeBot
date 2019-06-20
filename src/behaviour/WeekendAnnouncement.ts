@@ -1,8 +1,9 @@
-import config from "config.json";
-import LokeBot from "LokeBot";
-import { scheduleJobUtc } from "misc/ScheduleJobUtc";
+import config from "../config.json";
+import LokeBot from "../LokeBot";
+import { scheduleJobUtc } from "../misc/ScheduleJobUtc";
+import { BehaviourInitializer } from "../Interfaces";
 
-export function init(bot: LokeBot) {
+export let init: BehaviourInitializer = (bot) => {
 
     // weekend announcement
 	scheduleJobUtc("Weekend Announcement", "0 16 * * 5", config.timezone, () => {

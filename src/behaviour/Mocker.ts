@@ -1,9 +1,9 @@
 import { Message, TextChannel } from "discord.js";
-import LokeBot from "LokeBot";
-import { Rules } from "Rules";
-import { Utils } from "misc/Utils";
+import { BehaviourInitializer } from "../Interfaces";
+import { Utils } from "../misc/Utils";
+import { Rules } from "../Rules";
 
-export function init(bot: LokeBot) {
+export let init: BehaviourInitializer = (bot) => {
 
     const CACHE_SIZE: number = 100;
     const mockMsgCache: Map<string, Message> = new Map();

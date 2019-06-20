@@ -1,15 +1,19 @@
-import auth from "auth.json";
-import { initBehaviour } from "Behaviour";
-import { CommandHandler } from "CommandHandler";
-import { BotEvent } from "Constants";
-import { DbRemote } from "DbRemote";
 import { Client, DMChannel, GroupDMChannel, Guild, GuildChannel, GuildMember, RichEmbed, Role, StringResolvable, TextChannel, User } from "discord.js";
-import { EventHandler } from "EventHandler";
-import { GuildMap, Loker, UserMap } from "Interfaces";
-import { Logger } from "Logger";
 import Long from "long";
-import { printNextInvocations } from "misc/ScheduleJobUtc";
-import { RuleEnforcer } from "RuleEnforcer";
+import auth from "./auth.json";
+import { initBehaviour } from "./Behaviour";
+import { CommandHandler } from "./CommandHandler";
+import { BotEvent } from "./Constants";
+import { DbRemote } from "./DbRemote";
+import { EventHandler } from "./EventHandler";
+import { GuildMap, Loker, UserMap } from "./Interfaces";
+import { Logger } from "./Logger";
+import { printNextInvocations } from "./misc/ScheduleJobUtc";
+import { RuleEnforcer } from "./RuleEnforcer";
+
+export interface LokeBotOpts {
+	useTestDb?: boolean
+}
 
 export default class LokeBot {
 
@@ -17,7 +21,7 @@ export default class LokeBot {
 
 	private ready: boolean = false;
 	private exiting: boolean = false;
-	
+
 	/**
 	 * A map where all the guilds the bot is member of is paired with
 	 * an array of its users.
@@ -35,66 +39,69 @@ export default class LokeBot {
 	public commandHandler: CommandHandler;
 	public ruleEnforcer: RuleEnforcer;
 
-	constructor() {
+	constructor(opts: LokeBotOpts = {}) {
 
 		this.client = new Client();
-		this.dbRemote = new DbRemote();
+		this.dbRemote = new DbRemote({ useTestDb: opts.useTestDb });
 		this.commandHandler = new CommandHandler(this);
 		this.ruleEnforcer = new RuleEnforcer();
 
-		process.on("SIGINT", () => { this.exit() });
-		process.on("SIGABRT", () => { this.exit() });
-
 	}
 
-	public start(): void {
-		
-		this.client.on('ready', () => {
+	public async start(): Promise<void> {
 
-			if (!this.ready) {
-				Logger.info(`Logged in as ${this.client.user.tag}!`);
-				
-				this.populateGuildMap();
-				this.populateUserMap();
-				initBehaviour(this);
-				printNextInvocations();
-	
-				this.ready = true;
-				EventHandler.trigger(BotEvent.BOT_READY, true);
-			}
-			
+		return new Promise<void>((resolve, reject) => {
+			if (this.ready) return resolve();
+
+			this.client.on('ready', () => {
+
+				if (!this.ready) {
+					Logger.info(`Logged in as ${this.client.user.tag}!`);
+
+					this.populateGuildMap();
+					this.populateUserMap();
+					initBehaviour(this);
+					printNextInvocations();
+
+					this.ready = true;
+					EventHandler.trigger(BotEvent.BOT_READY, true);
+					resolve();
+				}
+
+			});
+
+			// triggered when LokeBot joins a guild
+			this.client.on("guildCreate", guild => {
+				this.addGuild(guild);
+				this.addGuildMembers(guild);
+			});
+
+			// triggered when LokeBot is kicked from a guild
+			this.client.on("guildDelete", guild => {
+				this.removeGuild(guild);
+			});
+
+			// triggered when a member joins a guild where LokeBot is also a
+			// member
+			this.client.on("guildMemberAdd", member => {
+				this.addMember(member);
+			});
+
+			// triggered when a member leaves a guild where LokeBot is also
+			// a member
+			this.client.on("guildMemberRemove", member => {
+				this.removeMember(member);
+			});
+
+			this.client.on("error", err => {
+				Logger.error(err);
+			});
+
+			this.dbRemote.connect();
+
+			this.client.login(LokeBot.TOKEN);
+
 		});
-
-		// triggered when LokeBot joins a guild
-		this.client.on("guildCreate", guild => {
-			this.addGuild(guild);
-			this.addGuildMembers(guild);
-		});
-
-		// triggered when LokeBot is kicked from a guild
-		this.client.on("guildDelete", guild => {
-			this.removeGuild(guild);
-		});
-
-		// triggered when a member joins a guild where LokeBot is also a
-		// member
-		this.client.on("guildMemberAdd", member => {
-			this.addMember(member);
-		});
-
-		// triggered when a member leaves a guild where LokeBot is also
-		// a member
-		this.client.on("guildMemberRemove", member => {
-			this.removeMember(member);
-		});
-
-		this.client.on("error", err => {
-			Logger.error(err);
-		});
-
-		this.dbRemote.connect();
-
-		this.client.login(LokeBot.TOKEN);
 
 	}
 
@@ -113,9 +120,9 @@ export default class LokeBot {
 				}
 			});
 			this.guildMap.set(guild, userList);
-			
+
 		}
-		
+
 	}
 
 	/**
@@ -138,9 +145,9 @@ export default class LokeBot {
 					if (i != -1) loker.guilds.splice(i, 1);
 				}
 			})
-			
+
 		}
-		
+
 	}
 
 	/**
@@ -155,14 +162,14 @@ export default class LokeBot {
 			if (!member.user.bot) {
 				let loker = this.userMap.get(member.user);
 				if (loker == undefined) {
-					this.userMap.set(member.user, {user: member.user, status: true, guilds: [member.guild]});
+					this.userMap.set(member.user, { user: member.user, status: true, guilds: [member.guild] });
 				} else {
 					loker.guilds.push(member.guild);
 				}
 			}
-			
+
 		}
-		
+
 	}
 
 	/**
@@ -179,11 +186,11 @@ export default class LokeBot {
 			if (loker) {
 				let i = loker.guilds.indexOf(member.guild);
 				if (i != -1) loker.guilds.splice(i, 1);
-				
+
 				if (loker.guilds.length == 0)
 					this.userMap.delete(member.user);
 			}
-			
+
 		}
 
 		if (this.guildMap) {
@@ -193,9 +200,9 @@ export default class LokeBot {
 				let i = userList.indexOf(member.user);
 				if (i != -1) userList.splice(i, 1);
 			}
-			
+
 		}
-		
+
 	}
 
 	/**
@@ -207,7 +214,7 @@ export default class LokeBot {
 		guild.members.forEach(member => {
 			this.addMember(member);
 		});
-		
+
 	}
 
 	/**
@@ -233,19 +240,19 @@ export default class LokeBot {
 		this.client.guilds.forEach((guild) => {
 			this.addGuildMembers(guild);
 		});
-		
+
 	}
 
 	/**
 	 * Pretty print the guild map.
 	 * @param log Log output to console
 	 */
-	public ppGuildMap(log=false): string {
+	public ppGuildMap(log = false): string {
 
 		let dict: { [key: string]: string[] } = {};
 
 		this.guildMap.forEach((memberList, guild) => {
-			
+
 			dict[guild.name] = [];
 
 			memberList.forEach((user) => {
@@ -264,9 +271,9 @@ export default class LokeBot {
 	 * Pretty print the user map.
 	 * @param log Log output to console
 	 */
-	public ppUserMap(log=false): string {
+	public ppUserMap(log = false): string {
 
-		let dict: { 
+		let dict: {
 			[key: string]: {
 				status: boolean,
 				guilds: string[]
@@ -287,7 +294,7 @@ export default class LokeBot {
 		if (log) Logger.println(s);
 
 		return s;
-		
+
 	}
 
 	/**
@@ -295,7 +302,7 @@ export default class LokeBot {
 	 * @param list 
 	 * @param log log output to the console
 	 */
-	public ppUserList(list: User[] | GuildMember[], log=false): string {
+	public ppUserList(list: User[] | GuildMember[], log = false): string {
 
 		let temp: any[] = [];
 
@@ -311,16 +318,16 @@ export default class LokeBot {
 
 		let s = JSON.stringify(temp, undefined, 2);
 		if (log) Logger.println(s);
-		
+
 		return s;
-		
+
 	}
 
 	/**
 	 * Iterate over all Lokere from all guilds. 
 	 * @param callback If the callback returns `true`, the remaining iterations are skipped.
 	 */
-	public iterateLokere( callback: (loker: Loker) => boolean | void): void {
+	public iterateLokere(callback: (loker: Loker) => boolean | void): void {
 
 		let stop = false;
 
@@ -346,7 +353,7 @@ export default class LokeBot {
 		})
 
 		return result;
-		
+
 	}
 
 	/**
@@ -367,7 +374,7 @@ export default class LokeBot {
 	 * @param strict Whether or not the query should be strict 
 	 * @see [[LokeBot.queryUsers]] for details on how user queries work.
 	 */
-	public overrideStatus(conf: {[key:string]: boolean}, strict=false): void {
+	public overrideStatus(conf: { [key: string]: boolean }, strict = false): void {
 
 		let entries = Object.entries(conf);
 		entries.forEach(pair => {
@@ -399,7 +406,7 @@ export default class LokeBot {
 	public async getLokerRole(guild: Guild): Promise<Role> {
 
 		let role = guild.roles.find(role => role.name == "Loker");
-		
+
 		if (role === null) {
 			await guild.createRole({ name: "Loker", color: "BLUE" }).then(r => {
 				role = r;
@@ -416,7 +423,7 @@ export default class LokeBot {
 	public async getRuttaRole(guild: Guild): Promise<Role> {
 
 		let role = guild.roles.find(role => role.name == "Rutta-gutta");
-		
+
 		if (role === null) {
 			await guild.createRole({ name: "Rutta-gutta", color: "LUMINOUS_VIVID_PINK" }).then(r => {
 				role = r;
@@ -434,14 +441,14 @@ export default class LokeBot {
 	 * @param messageContent 
 	 * @param channel 
 	 */
-	public userSay(user: User, embedContent: StringResolvable, messageContent="", channel?: TextChannel | DMChannel | GroupDMChannel): void {
+	public userSay(user: User, embedContent: StringResolvable, messageContent = "", channel?: TextChannel | DMChannel | GroupDMChannel): void {
 
 		let displayName = user.username;
 		if (channel && channel instanceof TextChannel) {
 			let member = this.queryUsers(user.id, channel.guild, true);
 			if (member) displayName = member.displayName;
 		}
-		
+
 		let embed = new RichEmbed({
 			description: embedContent,
 			color: parseInt("E64F25", 16),
@@ -450,17 +457,17 @@ export default class LokeBot {
 				icon_url: user.avatarURL
 			}
 		})
-		
+
 		if (channel) channel.send(messageContent, { embed: embed });
 		else user.send(messageContent, { embed: embed });
-		
+
 	}
 
 	public getDisplayName(userQuery: string | User | Loker, guildQuery?: string | Guild): string | null {
-		
+
 		// allow only characters in the extended ascii range (0-255)
 		let filter = /[^\x00-\xff]/g;
-		
+
 		let guild: Guild | null = null;
 		if (typeof guildQuery == "string") {
 			guild = this.queryGuilds(guildQuery);
@@ -481,7 +488,7 @@ export default class LokeBot {
 			else {
 				member = this.queryUsers(userQuery.user.id, guild);
 			}
-	
+
 			if (!member) return null;
 			return member.displayName.replace(filter, "");
 		}
@@ -494,7 +501,7 @@ export default class LokeBot {
 			}
 			else return userQuery.user.username.replace(filter, "");
 		}
-		
+
 	}
 
 	/**
@@ -517,7 +524,7 @@ export default class LokeBot {
 	 * match of either user tag, or nickname
 	 */
 	public queryUsers(query: string, guild: Guild, strict?: boolean): GuildMember | null;
-	public queryUsers(query: string, strictOrGuild?: boolean | Guild, strict=false): Loker | GuildMember | null {
+	public queryUsers(query: string, strictOrGuild?: boolean | Guild, strict = false): Loker | GuildMember | null {
 
 		let result: Loker | GuildMember | null = null;
 		let strictFlag: boolean = strict;
@@ -577,7 +584,7 @@ export default class LokeBot {
 	 * if strict: guild id.
 	 * @param strict If strict: query must be an exact match
 	 */
-	public queryGuilds(query: string, strict=false): Guild | null {
+	public queryGuilds(query: string, strict = false): Guild | null {
 
 		let result: Guild | null = null;
 
@@ -624,19 +631,20 @@ export default class LokeBot {
 	 */
 	public async exit(): Promise<void> {
 
-		if (this.exiting) return;
-		this.exiting = true;
-		
-		Logger.println("\nClosing connections and exiting...");
-
-		await this.client.destroy().then(() => {
+		return new Promise<void>(async (resolve, reject) => {
+			if (this.exiting) return reject();
+			this.exiting = true;
+	
+			Logger.println("\nClosing connections and exiting...");
+			
+			await this.client.destroy();
 			Logger.success("Successfully disconnected client!");
+	
+			await this.dbRemote.disconnect();
+			Logger.println("Successfully closed all connections!");
+
+			resolve();
 		});
-
-		await this.dbRemote.disconnect();
-		Logger.println("Successfully closed all connections!");
-
-		process.exit(0);
 
 	}
 

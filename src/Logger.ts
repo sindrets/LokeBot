@@ -1,22 +1,32 @@
-import getCursorPos from "get-cursor-position";
 import chalk from "chalk";
-import { Globals } from "Globals";
+import { Globals } from "./Globals";
 
 export class Logger {
+
+    public static enabled: boolean = true;
+
+    private static posIsZero: boolean = true;
+
+    private static updatePos(message: any) {
+        if (typeof message !== "string" || message[message.length-1] != "\n") {
+            Logger.posIsZero = false;
+        }
+        else Logger.posIsZero = true;
+    }
 
     /**
      * Prints to `stdout`, only if the bot is running in debug mode.
      * @param message 
      */
     public static debug(message?: any): void {
-        if (Globals.DEBUG_MODE) {
+        if (Logger.enabled && Globals.DEBUG_MODE) {
             let prefix = "";
-            let pos = getCursorPos.sync();
-            if ((pos && pos.col == 1) || pos === undefined) {
+            if (Logger.posIsZero) {
                 prefix = chalk.yellow("DEBUGGER: ");
             }
             process.stdout.write(prefix);
             process.stdout.write(message);
+            Logger.updatePos(message);
         }
     }
 
@@ -27,13 +37,13 @@ export class Logger {
      * @param optionalParams 
      */
     public static debugln(message?: any, ...optionalParams: any[]): void {
-        if (Globals.DEBUG_MODE) {
+        if (Logger.enabled && Globals.DEBUG_MODE) {
             let prefix = "";
-            let pos = getCursorPos.sync();
-            if ((pos && pos.col == 1) || pos === undefined) {
+            if (Logger.posIsZero) {
                 prefix = chalk.yellow("DEBUGGER: ");
             }
             console.log(prefix, message, ...optionalParams);
+            Logger.posIsZero = true;
         }
     }
 
@@ -42,7 +52,10 @@ export class Logger {
      * @param message 
      */
     public static print(message?: any): void {
-        process.stdout.write(message);
+        if (Logger.enabled) {
+            process.stdout.write(message);
+            Logger.updatePos(message);
+        }
     }
 
     /**
@@ -51,7 +64,10 @@ export class Logger {
      * @param optionalParams 
      */
     public static println(message?: any, ...optionalParams: any[]): void {
-        console.log(message, ...optionalParams);
+        if (Logger.enabled) {
+            console.log(message, ...optionalParams);
+            Logger.posIsZero = true;
+        }
     }
 
     /**
@@ -60,10 +76,13 @@ export class Logger {
      * @param optionalParams 
      */
     public static info(message?: any, ...optionalParams: any[]): void {
-        if (typeof message === "string") {
-            message = chalk.blue(message);
+        if (Logger.enabled) {
+            if (typeof message === "string") {
+                message = chalk.blue(message);
+            }
+            console.log(chalk.blue("INFO: "), message, ...optionalParams);
+            Logger.posIsZero = true;
         }
-        console.log(chalk.blue("INFO: "), message, ...optionalParams);
     }
 
     /**
@@ -72,10 +91,13 @@ export class Logger {
      * @param optionalParams 
      */
     public static success(message?: any, ...optionalParams: any[]): void {
-        if (typeof message === "string") {
-            message = chalk.green(message);
+        if (Logger.enabled) {
+            if (typeof message === "string") {
+                message = chalk.green(message);
+            }
+            console.log(message, ...optionalParams);
+            Logger.posIsZero = true;
         }
-        console.log(message, ...optionalParams);
     }
 
     /**
@@ -84,10 +106,13 @@ export class Logger {
      * @param optionalParams 
      */
     public static warn(message?: any, ...optionalParams: any[]): void {
-        if (typeof message === "string") {
-            message = chalk.yellowBright(message);
+        if (Logger.enabled) {
+            if (typeof message === "string") {
+                message = chalk.yellowBright(message);
+            }
+            console.log(chalk.yellowBright("WARNING: "), message, ...optionalParams);
+            Logger.posIsZero = true;
         }
-        console.log(chalk.yellowBright("WARNING: "), message, ...optionalParams);
     }
 
     /**
@@ -96,10 +121,13 @@ export class Logger {
      * @param optionalParams 
      */
     public static error(message?: any, ...optionalParams: any[]): void {
-        if (typeof message === "string") {
-            message = chalk.red(message);
+        if (Logger.enabled) {
+            if (typeof message === "string") {
+                message = chalk.red(message);
+            }
+            else console.error(chalk.red("ERROR: "), message, ...optionalParams);
+            Logger.posIsZero = true;
         }
-        else console.error(chalk.red("ERROR: "), message, ...optionalParams);
     }
 
 }

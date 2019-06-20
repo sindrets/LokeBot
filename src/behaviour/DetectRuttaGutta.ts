@@ -1,12 +1,11 @@
-import config from "config.json";
 import cronParser from "cron-parser";
-import LokeBot from "LokeBot";
 import { sprintf } from "sprintf-js";
+import { getActiveException } from "../commands/CmdException";
+import config from "../config.json";
+import { BehaviourInitializer } from "../Interfaces";
 import moment = require("moment-timezone");
-import { getActiveException } from "commands/CmdException";
-import { printNextInvocations } from "misc/ScheduleJobUtc";
 
-export function init(bot: LokeBot) {
+export let init: BehaviourInitializer = (bot) => {
 
 	bot.client.on("message", msg => {
 

@@ -1,7 +1,7 @@
 import stringify from "stringify-object";
 import { BotEvent } from "./Constants";
 import { EventListenerDict, OnceEventListenerDict } from "./Interfaces";
-import { Logger } from "Logger";
+import { Logger } from "./Logger";
 
 export class EventHandler {
 

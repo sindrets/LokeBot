@@ -1,6 +1,6 @@
-import LokeBot from "LokeBot";
+import { BehaviourInitializer } from "../Interfaces";
 
-export function init(bot: LokeBot) {
+export let init: BehaviourInitializer = (bot) => {
 
     bot.client.on("message", msg => {
 

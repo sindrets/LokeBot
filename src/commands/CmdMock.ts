@@ -1,5 +1,5 @@
-import { CmdInitializer } from "Interfaces";
-import { Utils } from "misc/Utils";
+import { CmdInitializer } from "../Interfaces";
+import { Utils } from "../misc/Utils";
 
 export let init: CmdInitializer = (ch, bot) => {
 

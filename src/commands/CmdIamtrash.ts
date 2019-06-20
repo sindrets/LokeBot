@@ -1,5 +1,5 @@
-import { GelbooruResponseBody, CmdInitializer } from "Interfaces";
-import { TrashConveyor } from "TrashConveyor";
+import { GelbooruResponseBody, CmdInitializer } from "../Interfaces";
+import { TrashConveyor } from "../TrashConveyor";
 
 export let init: CmdInitializer = (ch, bot) => {
 

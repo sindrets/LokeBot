@@ -1,11 +1,12 @@
 import { Guild, User } from "discord.js";
-import { CommandHandler } from "CommandHandler";
-import LokeBot from "LokeBot";
+import { CommandHandler } from "./CommandHandler";
+import LokeBot from "./LokeBot";
 
 export type GuildMap = Map<Guild, User[]>;
 export type UserMap = Map<User, Loker>;
 
 export type CmdInitializer = (ch: CommandHandler, bot: LokeBot) => void;
+export type BehaviourInitializer = (bot: LokeBot) => any;
 
 export interface Loker {
 	user: User,

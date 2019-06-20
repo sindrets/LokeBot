@@ -1,4 +1,4 @@
-import { FlagParser } from "FlagParser";
+import { FlagParser } from "./FlagParser";
 
 export class Globals {
     static args: string[];

@@ -1,9 +1,9 @@
 import { Message } from "discord.js";
 import fs from "fs";
-import { Logger } from "Logger";
 import path from "path";
 import config from "./config.json";
 import { FlagParser } from "./FlagParser";
+import { Logger } from "./Logger";
 import LokeBot from "./LokeBot";
 
 type CmdHandlerDict = { [key: string]: (msg: Message, flags: FlagParser, ...args: any[]) => void };
@@ -22,7 +22,7 @@ export class CommandHandler {
 
 		let files = fs.readdirSync(path.join(__dirname, "commands"));
 		files.forEach(file => {
-			require(`commands/${file}`).init(this, this.bot);
+			require(`./commands/${file}`).init(this, this.bot);
 		});
 
 	}

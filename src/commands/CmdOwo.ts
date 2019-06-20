@@ -1,5 +1,5 @@
-import { CmdInitializer } from "Interfaces";
-import owofy = require("owofy");
+import { CmdInitializer } from "../Interfaces";
+import owofy from "owofy";
 
 export let init: CmdInitializer = (ch, bot) => {
 

@@ -1,7 +1,7 @@
 import chalk from "chalk";
-import { CmdInitializer } from "Interfaces";
-import { Logger } from "Logger";
-import stringifyObject = require("stringify-object");
+import stringifyObject from "stringify-object";
+import { CmdInitializer } from "../Interfaces";
+import { Logger } from "../Logger";
 
 export let init: CmdInitializer = (ch, bot) => {
 

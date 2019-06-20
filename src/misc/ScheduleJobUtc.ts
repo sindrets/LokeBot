@@ -1,8 +1,7 @@
 import cronParser, { CronExpression } from "cron-parser";
-import { CronFields } from "Interfaces";
-import { Logger } from "Logger";
 import moment, { Moment } from "moment-timezone";
 import schedule, { Job } from "node-schedule";
+import { Logger } from "../Logger";
 import { Utils } from "./Utils";
 
 export type RecurrenceDef = number | number[] | TimeRange;

@@ -1,5 +1,5 @@
 import { User } from "discord.js";
-import { Logger } from "Logger";
+import { Logger } from "./Logger";
 import { Collection, Db, InsertOneWriteOpResult, MongoClient, MongoError, ReplaceWriteOpResult, UpdateWriteOpResult, DeleteWriteOpResultObject } from "mongodb";
 import { sprintf } from "sprintf-js";
 import auth from "./auth.json";
@@ -7,12 +7,20 @@ import { BotEvent } from "./Constants";
 import { EventHandler } from "./EventHandler";
 import { LokerStatDoc, ExceptionDoc } from "./Interfaces";
 import { Utils } from "./misc/Utils";
+import { MongoMemoryServer } from "mongodb-memory-server";
+
+interface DbRemoteOpts {
+	useTestDb?: boolean,
+	testDataPath?: string
+}
 
 export class DbRemote {
 
-	private readonly uri: string;
-	private readonly dbName: string;
+	private opts: DbRemoteOpts;
+	private uri?: string;
+	private dbName?: string;
 
+	private mongoServer?: MongoMemoryServer;
 	private dbClient?: MongoClient;
 	private db?: Db;
 	private lokeStats?: Collection;
@@ -20,9 +28,15 @@ export class DbRemote {
 	private quotes?: Collection;
 	private connected: boolean = false;
 
-	constructor() {
-		this.uri = sprintf(auth.SRV_ADDRESS, auth.DB_U, encodeURI(auth.DB_P));
-		this.dbName = auth.DB_NAME;
+	constructor(opts: DbRemoteOpts = {}) {
+		this.opts = opts;
+		if (opts.useTestDb) {
+			this.mongoServer = new MongoMemoryServer();
+		}
+		else {
+			this.uri = sprintf(auth.SRV_ADDRESS, auth.DB_U, encodeURI(auth.DB_P));
+			this.dbName = auth.DB_NAME;
+		}
 	}
 
 	/**
@@ -30,29 +44,36 @@ export class DbRemote {
 	 */
 	public async connect(): Promise<Db> {
 
+		if (this.opts.useTestDb && this.mongoServer) {
+			this.uri = await this.mongoServer.getConnectionString();
+			this.dbName = await this.mongoServer.getDbName();
+		}
+
 		return new Promise<Db>((resolve, reject) => {
 
-			MongoClient.connect(this.uri, {useNewUrlParser: true}, (err, dbClient) => {
-
-				// assert.strictEqual(err, null);
-				if (err) {
-					Logger.error(err.errmsg);
-					reject(err);
-					return;
-				}
-				Logger.success("Successfully connected to the database!");
+			if (this.uri && this.dbName) {
+				MongoClient.connect(this.uri, {useNewUrlParser: true}, (err, dbClient) => {
 	
-				this.dbClient = dbClient;
-				this.db = dbClient.db(this.dbName);
-				this.lokeStats = this.db.collection("lokeStats");
-				this.exceptions = this.db.collection("exceptions");
-				this.quotes = this.db.collection("quotes");
-				this.connected = true;
-				EventHandler.trigger(BotEvent.CONNECTED, true);
-
-				resolve(this.db);
-
-			});
+					// assert.strictEqual(err, null);
+					if (err) {
+						Logger.error(err.errmsg);
+						reject(err);
+						return;
+					}
+					Logger.success("Successfully connected to the database!");
+		
+					this.dbClient = dbClient;
+					this.db = dbClient.db(this.dbName);
+					this.lokeStats = this.db.collection("lokeStats");
+					this.exceptions = this.db.collection("exceptions");
+					this.quotes = this.db.collection("quotes");
+					this.connected = true;
+					EventHandler.trigger(BotEvent.CONNECTED, true);
+	
+					resolve(this.db);
+	
+				});
+			}
 
 		})
 	}

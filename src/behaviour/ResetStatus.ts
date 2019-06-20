@@ -1,9 +1,9 @@
-import LokeBot from "LokeBot";
-import config from "config.json";
-import { Logger } from "Logger";
-import { scheduleJobUtc } from "misc/ScheduleJobUtc";
+import config from "../config.json";
+import { BehaviourInitializer } from "../Interfaces";
+import { Logger } from "../Logger";
+import { scheduleJobUtc } from "../misc/ScheduleJobUtc";
 
-export function init(bot: LokeBot) {
+export let init: BehaviourInitializer = (bot) => {
 
     // set all users' loke status to true, and remove "Loker" /
 	// "Rutta-gutta" role every morning.

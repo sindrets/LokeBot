@@ -1,4 +1,4 @@
-import { Utils } from "misc/Utils";
+import { Utils } from "./misc/Utils";
 
 export class FlagParser extends Map<string,string> {
 

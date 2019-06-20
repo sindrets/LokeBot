@@ -1,8 +1,8 @@
-import config from "config.json";
 import { Guild, GuildMember, RichEmbed, User } from "discord.js";
-import { CmdInitializer } from "Interfaces";
-import { Utils } from "misc/Utils";
 import moment from "moment-timezone";
+import config from "../config.json";
+import { CmdInitializer } from "../Interfaces";
+import { Utils } from "../misc/Utils";
 
 export let init: CmdInitializer = (ch, bot) => {
 

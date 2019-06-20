@@ -1,10 +1,10 @@
-import config from "config.json";
 import { Message } from "discord.js";
-import { CmdInitializer, ExceptionDoc } from "Interfaces";
-import { Logger } from "Logger";
-import { UserError } from "misc/UserError";
-import { Utils } from "misc/Utils";
 import moment from "moment-timezone";
+import config from "../config.json";
+import { CmdInitializer, ExceptionDoc } from "../Interfaces";
+import { Logger } from "../Logger";
+import { UserError } from "../misc/UserError";
+import { Utils } from "../misc/Utils";
 
 export let init: CmdInitializer = (ch, bot) => {
 

@@ -1,5 +1,5 @@
 import moment = require("moment-timezone");
-import { Logger } from "Logger";
+import { Logger } from "../Logger";
 
 export class Utils {
 

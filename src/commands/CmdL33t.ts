@@ -1,5 +1,5 @@
-import { Leet } from "misc/Leet";
-import { CmdInitializer } from "Interfaces";
+import { Leet } from "../misc/Leet";
+import { CmdInitializer } from "../Interfaces";
 
 export let init: CmdInitializer = (ch, bot) => {
 

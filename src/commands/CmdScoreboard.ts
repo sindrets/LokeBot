@@ -1,8 +1,8 @@
 import AsciiTable from "ascii-table";
 import { RichEmbed } from "discord.js";
-import { CmdInitializer } from "Interfaces";
-import { Utils } from "misc/Utils";
-import { RankStrategy, Scoreboard, ScoreboardItem } from "Scoreboard";
+import { CmdInitializer } from "../Interfaces";
+import { Utils } from "../misc/Utils";
+import { RankStrategy, Scoreboard, ScoreboardItem } from "../Scoreboard";
 
 export let init: CmdInitializer = (ch, bot) => {
 
