@@ -13,7 +13,6 @@ import auth from "./auth.json";
 import { FlagParser } from "./FlagParser";
 import { Globals } from "./Globals";
 import { Logger } from "./Logger";
-import { TestRunner } from "./tests/old/testRunner";
 import LokeBot, { LokeBotOpts } from "./LokeBot";
 
 // global variables
@@ -69,16 +68,12 @@ process.on("SIGBREAK", async signal => {
 	await preExitHook(signal);
 });
 
-if (Globals.flags.isTrue("test")) {
-	new TestRunner();
-} else {
-	let botOpts: LokeBotOpts = {};
-	if (Globals.flags.isTrue("useTestDb")) {
-		botOpts.useTestDb = true;
-	}
-	bot = new LokeBot(botOpts);
-	bot.start();
+let botOpts: LokeBotOpts = {};
+if (Globals.flags.isTrue("useTestDb")) {
+	botOpts.useTestDb = true;
 }
+bot = new LokeBot(botOpts);
+bot.start();
 
 const rl = readline.createInterface({
 	input: process.stdin,
