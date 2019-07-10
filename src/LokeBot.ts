@@ -64,7 +64,7 @@ export default class LokeBot {
 					printNextInvocations();
 
 					this.ready = true;
-					EventHandler.trigger(BotEvent.BOT_READY, true);
+					EventHandler.trigger(BotEvent.BOT_READY);
 					resolve();
 				}
 

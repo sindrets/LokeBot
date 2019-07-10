@@ -67,6 +67,9 @@ process.on("SIGHUP", async signal => {
 process.on("SIGBREAK", async signal => {
 	await preExitHook(signal);
 });
+process.on("message", msg => {
+	Logger.println("Received message:", msg);
+})
 
 let botOpts: LokeBotOpts = {};
 if (Globals.flags.isTrue("useTestDb")) {

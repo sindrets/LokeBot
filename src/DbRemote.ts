@@ -68,7 +68,7 @@ export class DbRemote {
 					this.exceptions = this.db.collection("exceptions");
 					this.quotes = this.db.collection("quotes");
 					this.connected = true;
-					EventHandler.trigger(BotEvent.CONNECTED, true);
+					EventHandler.trigger(BotEvent.CONNECTED);
 	
 					resolve(this.db);
 	

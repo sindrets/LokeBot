@@ -1,120 +1,130 @@
-import stringify from "stringify-object";
 import { BotEvent } from "./Constants";
-import { EventListenerDict, OnceEventListenerDict } from "./Interfaces";
-import { Logger } from "./Logger";
 
-export class EventHandler {
+type EventIdentifier = string | BotEvent;
 
-	private static eventListeners: EventListenerDict = {};
-	private static onceEventListeners: OnceEventListenerDict = {};
+class EventSubscription {
+	once: boolean;
+	emitted: boolean = false;
+	requirements: EventIdentifier[];
+	callback: (...args: any[]) => any;
 
-	/**
-	 * Add an event listener.
-	 * @param event Event identifier. If an array is provided: all the
-	 * events in the array must be triggered before the provided
-	 * listener is called.
-	 * @param listener A callback method invocated on the event trigger.
-	 * @param once Indicates that this is an event that will only be
-	 * triggered once, and once triggered: any subsequent subscriptions
-	 * to the event will be immediately triggered.
-	 */
-	public static on(event: string | BotEvent | (string | BotEvent)[], listener: (...args: any[]) => void, once=false): void {
-
-		let eventList: string[] = [];
-		if (event instanceof Array) {
-			if (!once) {
-				Logger.error("Multi-event subscriptions aren't permitted for non-singular events!");
-				return;
-			}
-			(eventList as any[]) = event;
+	constructor(requirements: EventIdentifier[], callback: (...args: any[]) => any, once = false) {
+		this.once = once;
+		this.requirements = requirements;
+		this.callback = callback;
+		if (this.once) {
+			// if once event: ping to check if requirements are already met
+			this.ping();
 		}
-		else eventList.push(String(event));
-
-		eventList.forEach((e, i) => {
-			let requirements = eventList.slice(0);
-			requirements.splice(i, 1); // remove current event
-
-			if (once) {
-				let eventEntry = EventHandler.onceEventListeners[e]; 
-				if (!eventEntry) eventEntry = EventHandler.onceEventListeners[e] = { 
-					done: false, 
-					args: [], 
-					listeners: [] 
-				};
-				eventEntry.listeners.push({ requirements: requirements, callback: listener });
-				if (eventEntry.done && EventHandler.requirementsMet(requirements)) {
-					listener(eventEntry.args);
-				}
-			}
-			else {
-				if (!EventHandler.eventListeners[e]) EventHandler.eventListeners[e] = [];
-				EventHandler.eventListeners[e].push({ requirements: requirements, callback: listener });
-			}
-		})
-
 	}
 
-	/**
-	 * Trigger an event.
-	 * @param event Event identifier.
-	 * @param once Indicates that this event will only be triggered
-	 * once, and any subsequent subscriptions to this event will be
-	 * immediately triggered.
-	 * @param args Arguments passed to the listener callback.
-	 */
-	public static trigger(event: string | BotEvent, once=false, ...args: any[]): void {
-		
-		if (once) {
-			let eventEntry = EventHandler.onceEventListeners[event]; 
-			if (!eventEntry) eventEntry = EventHandler.onceEventListeners[event] = { done: true, args: args, listeners: [] };
-			else {
-				// If the event has already been triggered: return
-				if (eventEntry.done) return;
-
-				// mark event as completed
-				eventEntry.done = true;
-				eventEntry.listeners.forEach(listener => {
-					if (EventHandler.requirementsMet(listener.requirements)) 
-						listener.callback(args);
-				});
+	public ping(...args: any[]) {
+		if (this.once) {
+			if (!this.emitted && EventHandler.requirementsMet(this.requirements)) {
+				this.emitted = true;
+				this.callback(...args);
 			}
 		}
 		else {
-			if (!EventHandler.eventListeners[event]) return;
-			EventHandler.eventListeners[event].forEach(listener => {
-				if (EventHandler.requirementsMet(listener.requirements)) 
-					listener.callback(args);
-			});
+			this.emitted = true;
+			this.callback(...args);
 		}
 	}
+}
 
-	private static requirementsMet(requirements: string[]): boolean {
+class EventObject {
+	id: EventIdentifier;
+	emitted = false;
+	subscriptions: EventSubscription[];
+
+	constructor(id: EventIdentifier, subscriptions?: EventSubscription[], emitted = false) {
+		this.id = id;
+		this.emitted = emitted;
+		this.subscriptions = subscriptions ? subscriptions : [];
+	}
+
+	public addSubscription(subscription: EventSubscription) {
+		this.subscriptions.push(subscription);
+	}
+
+	public emit(...args: any[]) {
+		this.emitted = true;
+		this.subscriptions.forEach(s => {
+			s.ping(...args);
+		})
+	}
+}
+
+export class EventHandler {
+
+	private static eventDict: Map<EventIdentifier, EventObject> = new Map();
+	private static subscriptions: EventSubscription[] = [];
+
+	private static add(event: string | BotEvent | (string | BotEvent)[], listener: (...args: any[]) => any, once = false): EventSubscription {
+
+		let eventList: EventIdentifier[] = [];
+		if (event instanceof Array) {
+			event.forEach(e => {
+				eventList.push(String(e));
+			});
+		}
+		else eventList.push(String(event));
+
+		let subscription = new EventSubscription(eventList, listener, once);
+		EventHandler.subscriptions.push(subscription);
+
+		eventList.forEach(e => {
+			let eventEntry = EventHandler.eventDict.get(e);
+			if (eventEntry === undefined) {
+				EventHandler.eventDict.set(e, new EventObject(e, [subscription]));
+			}
+			else {
+				eventEntry.addSubscription(subscription);
+			}
+		});
+
+		return subscription;
+		
+	}
+
+	public static on(event: string | BotEvent | (string | BotEvent)[], listener: (...args: any[]) => any): void {
+		EventHandler.add(event, listener);
+	}
+
+	public static once(event: string | BotEvent | (string | BotEvent)[], listener: (...args: any[]) => any): void {
+		EventHandler.add(event, listener, true);
+	}
+
+	public static trigger(event: string | BotEvent, ...args: any[]): void {
+
+		let eventEntry = EventHandler.eventDict.get(String(event));
+		if (eventEntry !== undefined) {
+			eventEntry.emit(...args);
+		}
+		else {
+			EventHandler.eventDict.set(String(event), new EventObject(event, [], true));
+		}
+		
+	}
+
+	static requirementsMet(requirements: EventIdentifier[]): boolean {
 
 		let result = true;
-		requirements.some(event => {
-			let entry = EventHandler.onceEventListeners[event];
-			if (entry && entry.done == false) {
-				result = false;
-				return true;
+		requirements.some(name => {
+			let eventEntry = EventHandler.eventDict.get(name);
+			if (eventEntry !== undefined) {
+				if (!eventEntry.emitted) {
+					result = false;
+					return true;
+				}
+				else return false;
 			}
-			return false;
+			result = false;
+			return true;
 		})
 
 		return result;
 		
 	}
 
-	public static ppEventListeners(log=false): string {
-
-		let s = stringify({ 
-			eventListeners: EventHandler.eventListeners, 
-			onceEventListeners: EventHandler.onceEventListeners 
-		});
-
-		if (log) Logger.println(s);
-
-		return s;
-		
-	}
-	
 }

@@ -17,7 +17,10 @@ export class Logger {
 	private static posIsZero: boolean = true;
 
 	private static setupConsole(): Console {
-		return new console.Console(Logger.stdout, Logger.stderr);
+		if (console.Console){
+			return new console.Console(Logger.stdout, Logger.stderr);
+		}
+		return console;
 	}
 
 	private static updatePos(message: any) {
