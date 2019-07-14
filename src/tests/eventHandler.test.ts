@@ -7,9 +7,9 @@ test("'on' is triggered every time in single subscription.", () => {
 		i++;
 	});
 	EventHandler.trigger(event);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 	EventHandler.trigger(event);
-	expect(i).toEqual(2);
+	expect(i).toBe(2);
 });
 
 test("'on' is triggered by any event in multi subscription.", () => {
@@ -20,9 +20,9 @@ test("'on' is triggered by any event in multi subscription.", () => {
 		i++;
 	});
 	EventHandler.trigger(event1);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 	EventHandler.trigger(event2);
-	expect(i).toEqual(2);
+	expect(i).toBe(2);
 });
 
 test("'once' is triggered only once in single subscription.", () => {
@@ -32,9 +32,9 @@ test("'once' is triggered only once in single subscription.", () => {
 		i++;
 	});
 	EventHandler.trigger(event);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 	EventHandler.trigger(event);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 });
 
 test("'once' is triggered only once, after requirements are met in multi subscription.", () => {
@@ -45,13 +45,13 @@ test("'once' is triggered only once, after requirements are met in multi subscri
 		i++;
 	});
 	EventHandler.trigger(event1);
-	expect(i).toEqual(0);
+	expect(i).toBe(0);
 	EventHandler.trigger(event2);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 	EventHandler.trigger(event1);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 	EventHandler.trigger(event2);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 });
 
 test("Numbers work as event identifiers in single subscription.", () => {
@@ -61,9 +61,9 @@ test("Numbers work as event identifiers in single subscription.", () => {
 		i++;
 	});
 	EventHandler.trigger(event);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 	EventHandler.trigger(event);
-	expect(i).toEqual(2);
+	expect(i).toBe(2);
 });
 
 test("Numbers work as event identifiers in multi subscription.", () => {
@@ -74,11 +74,11 @@ test("Numbers work as event identifiers in multi subscription.", () => {
 		i++;
 	});
 	EventHandler.trigger(event1);
-	expect(i).toEqual(0);
+	expect(i).toBe(0);
 	EventHandler.trigger(event2);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 	EventHandler.trigger(event1);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 	EventHandler.trigger(event2);
-	expect(i).toEqual(1);
+	expect(i).toBe(1);
 });

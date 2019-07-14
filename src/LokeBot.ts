@@ -13,6 +13,7 @@ import { RuleEnforcer } from "./RuleEnforcer";
 
 export interface LokeBotOpts {
 	useTestDb?: boolean
+	useDebugUser?: boolean
 }
 
 export default class LokeBot {
@@ -45,6 +46,8 @@ export default class LokeBot {
 		this.dbRemote = new DbRemote({ useTestDb: opts.useTestDb });
 		this.commandHandler = new CommandHandler(this);
 		this.ruleEnforcer = new RuleEnforcer();
+		
+		if (opts.useDebugUser) LokeBot.TOKEN = auth.DEBUG_TOKEN;
 
 	}
 
